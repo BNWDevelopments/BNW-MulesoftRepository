@@ -1,0 +1,19 @@
+#%RAML 1.0
+title: bnw-google-ad-lead-integration-api
+version: v1
+
+types:
+  form-request-data: !include /datatypes/form-request-dataType.raml
+  form-response-data: !include /datatypes/form-response-dataType.raml
+
+/google-integration:
+  post:
+    description: Receives lead webhook from Google, fetches full lead details, and stores them in Salesforce.
+    body:
+      application/json:
+        type: form-request-data
+    responses:
+      200:
+        body:
+          application/json:
+            type: form-response-data

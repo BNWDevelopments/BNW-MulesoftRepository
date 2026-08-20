@@ -1,0 +1,15 @@
+salesforce:
+  password: "![VEwZgJHp7MksV/jW6os80g==]"
+  token: "![U+lGBUcyx4FJ/am31TRmeGb5SVqZMpJuByoyzP0ef+0=]"
+  consumerKey: "![6zSvdJ4lT7AJrLlYe6L72wknHUxU+9c0McYfuWtyITnE5Pkk0OZRUZZMKgQypF6xq1RZ8lEHKPDE9qK6IpvytEF4W5uqYdgS/ApOjBpMwsNxyv0sBhX8xw==]"
+  consumerSecret: "![is2+p7RzHyJs4ZmpbDY0mDYooYBdtbSZfU7WflkdyD42by1tIdt3pmrTi6s6GsTS3Tqo4AerS0ngeIdPXnX36OmaQUKQeYdL]"
+  
+facebook:
+  access_token: "![60AywBcoBSt8QYqzA6coIOQ8yOSnk3DBm91jETxmuIqYHoVelXhF/uHvK/II4rEwMcRYKpc94KvhHo7A6eS6yZI8Fp/Djbt5V/AqE635ZimnA4bLBd3BnR6wEsQFuZ+MbkAAJqlYZ0v3waglYDfDqNh6K3sbSGhtEFc4EsVK/whL5hjdLLffCFzHvzxvkzBNek1xXUdBiyhaerATzBSX8JogWtTiE61sMLHkPqFlYYHZjWUYAKGaun1MzArSc9eY7X0gMu9EZWk=]"
+        
+google:
+  securedClientId: "![QULhhH7GbpHxLGDXhhW6K7ZP7/yc50FHZgJYb9a5nYXRxRoRhmDYawJ2Uxfa8tBBvz26hhWCKdtBZV0RaNa37Ct1YJBSTNdgmFGZoGyC+T4=]"
+  securedClientSecret: "![z+JZUgoNZHKBrOyWQn5YWCWso3UGpPLK/IamSPy+Ur62PyzvnYk+jg==]"
+  securedDeveloperToken: "![WXobWxHYfGSTVxlKULEDqB0inqyGoDOH]" 
+  securedRefreshToken: "![l6/gRT/ko4uU+lAkNb6PUtrD+Sof6WwKcJhfsLMRgq2tRKvEe1XvtV7yDC7uJGmsvhjL7MPU/HONHvzBNwX4huvR16XBHqEo/EZk8UQR/5CPQ2Vbesm1ovwnkqs4jisK4Luw+kD0hJM=]"
+  securedCustomerId: "![Z3O//jcWs37sug5cVwl44g==]"

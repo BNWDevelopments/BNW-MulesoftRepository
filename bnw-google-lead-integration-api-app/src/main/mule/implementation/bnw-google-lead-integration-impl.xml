@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<sub-flow name="bnw-lead-integration-impl"
+		doc:id="bca0258a-3e30-4653-ba08-1627dc3e1595">
+		<logger level="INFO"
+			doc:name="Received Google Ads Incoming Payload"
+			doc:id="5bcd08ed-fc0c-4059-8094-1f2541b5d33d"
+			message="Received Google Lead Payload: #[payload]" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="99be32dc-dc97-44d2-8547-4138ac77836c">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="campaignId"><![CDATA[%dw 2.0
+output application/json
+---
+payload.campaign_id]]></ee:set-variable>
+				<ee:set-variable variableName="meta_data"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="customer_id" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.customer_id]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Looking up Campaign ID"
+			doc:id="d7b0cd9e-e2ba-47c2-b102-3980af53ccb3"
+			message="Looking up Campaign ID #[vars.campaignId]" />
+
+		<http:request method="POST"
+			doc:name="Request Google OAuth to fetch Access Token"
+			doc:id="34b16976-093e-4ed4-b79c-4f801b67d500" path="/token"
+			config-ref="HTTP_Request_configuration">
+			<http:body ><![CDATA[#[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	grant_type: "refresh_token",
+	client_id: p("google.clientId"),
+	client_secret: p("google.clientSecret"),
+	refresh_token: p("google.refreshToken")
+}]]]></http:body>
+		</http:request>
+		<set-variable value="#[payload.access_token]"
+			doc:name="Retrieve Access Token"
+			doc:id="db9d4b0f-504c-4d3b-b662-cbb68e618227"
+			variableName="accessToken" />
+		<logger level="INFO" doc:name="campaignId &amp; customerId" doc:id="76724819-24b5-4c69-916d-909788f97c46" message='"customerId and campaign id" #[vars.campaignId] #[vars.customer_id]'/>
+		<http:request method="POST"
+			doc:name="Request to fetch campaign details"
+			doc:id="ba04efbc-7d57-43c4-8c5f-effbf5d6d02c"
+			config-ref="HTTP_GoogleAd_Request_configuration"
+			path="/v25/customers/{customerId}/googleAds:search">
+			<http:body><![CDATA[#[{
+  query: "SELECT campaign.id, campaign.name FROM campaign WHERE campaign.id = " ++ vars.campaignId
+  
+  }]]]></http:body>
+			<http:headers><![CDATA[#[{
+	"Authorization": "Bearer " ++ vars.accessToken,
+	"developer-token": p("google.developerToken"),
+	"Accept": "application/json",
+	"login-customer-id" : p("google.customerId")
+}]]]></http:headers>
+			<http:uri-params><![CDATA[#[{
+	campaignId : vars.campaignId,
+	customerId : vars.customer_id
+}]]]></http:uri-params>
+			<http:query-params><![CDATA[#[{
+    access_token: vars.accessToken
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Logger"
+			doc:id="3b94f216-7b03-42b7-a847-0888465eca13" message="#[payload]" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="4137a44e-866b-49f6-87df-7158bb48de73">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="campaignName"><![CDATA[%dw 2.0
+output application/java
+---
+(payload.results[0].campaign.name default "")]]></ee:set-variable>
+				<ee:set-variable variableName="Id"><![CDATA[%dw 2.0
+output application/java
+---
+(payload.results[0].campaign.id default payload.id)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref
+			doc:name="BnW-Google-Create_Lead_In_Salesforce_Flow"
+			doc:id="f773279f-1927-469c-b3b9-48f5b9771f9f"
+			name="BnW-Google-Create_Lead_In_Salesforce_Flow" />
+	</sub-flow>
+	<sub-flow name="BnW-Google-Create_Lead_In_Salesforce_Flow"
+		doc:id="7775f8f6-f3e7-4180-8e47-472cee581c16">
+		<ee:transform
+			doc:name="map data if campaign details present"
+			doc:id="a21299ff-dd82-4f80-b393-705cef36e304">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+
+// Normalize Meta fields into a map
+var normalizedFields =
+    (vars.meta_data.user_column_data default [])
+        reduce ((item, acc = {}) ->
+            acc ++ {
+                (lower(item.column_id)):
+                    // Handle both string and array safely
+                    if (item.string_value is Array)
+                        item.string_value[0]
+                    else
+                        item.string_value
+            }
+        )
+
+// Extract values using aliases
+var fullName =
+    normalizedFields.full_name
+    default normalizedFields.fullname
+    default normalizedFields.fullname
+    default normalizedFields.name
+    default ""
+
+var email =
+    normalizedFields.email
+    default normalizedFields.email_address
+    default null
+
+var phone =
+    normalizedFields.phone_number
+    default normalizedFields.phone
+    default normalizedFields.mobile
+    default null
+
+// Name split
+var nameParts = fullName splitBy " "
+var firstName = if (sizeOf(nameParts) > 1) nameParts[0] else fullName
+var lastName =
+    if (sizeOf(nameParts) > 1)
+        (nameParts[1 to -1] joinBy " ")
+    else
+        "Unknown"
+
+---
+[{
+    FirstName: firstName,
+    LastName: lastName,
+    Email: if (email == "") null else email,
+    MobilePhone: if (phone == "") null else phone,
+    LeadSource: 'Digital',
+	Platform_Source__c: 'Google',
+	Google_Lead_Id__c: vars.meta_data.lead_id
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<try doc:name="Try" doc:id="1bd9d258-111c-467e-9920-10ce563a7519">
+			<salesforce:upsert doc:name="Create/Upsert a Lead"
+				doc:id="09195a34-879d-442c-a76e-b9cc879da76c"
+				config-ref="Salesforce_Config" objectType="Lead"
+				externalIdFieldName="Google_Lead_Id__c" />
+			<ee:transform doc:name="Lead update"
+				doc:id="a8a3f791-7db7-4ace-bfb1-10d757f4c1eb">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="leadUpdate"><![CDATA[%dw 2.0
+output application/json
+---
+payload
+        ]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<error-handler>
+				<on-error-continue enableNotifications="true"
+					logException="true" doc:name="Handle Expired Session"
+					doc:id="308f6f5d-6c39-4ab6-8b70-1a7f15f64e66"
+					when="#[error.description contains 'INVALID_SESSION_ID']">
+					<salesforce:upsert objectType="Lead"
+						externalIdFieldName="Google_Lead_Id__c"
+						doc:name="Create/Upsert a Lead"
+						doc:id="7d1c2b32-bbb4-4418-b67c-e126eacb137e"
+						config-ref="Salesforce_Config" />
+					<ee:transform doc:name="Lead update"
+						doc:id="36012721-555b-4db6-80c8-ff958eabcf71">
+						<ee:message />
+						<ee:variables>
+							<ee:set-variable variableName="leadUpdate"><![CDATA[%dw 2.0
+output application/json
+---
+payload
+            ]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Choice"
+			doc:id="5ec6d435-14d8-43d5-aaf2-1b8953418f66">
+			<when expression="#[vars.leadUpdate.successful == true]">
+				<logger level="INFO" doc:name="Response Success message"
+					doc:id="4d3c45a4-7de7-4211-8663-cf5d9a07e4ec"
+					message="#[vars.leadUpdate]" />
+				<set-variable value="#[vars.leadUpdate.items[0].id]"
+					doc:name="Set Variable leadId"
+					doc:id="1cee7a4c-911a-485a-8693-2f85f84716dd" variableName="leadId" />
+				<ee:transform doc:name="Response Success message"
+					doc:id="30cd0fd5-e388-4849-a4e5-f69f570046b8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: payload.successful,
+  message: ((vars.leadId default "Record") as String) ++ " is Created Successfully"
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Response Success message"
+					doc:id="12173def-f7e3-4858-8f9b-8143db243bfe" message="#[payload]" />
+				<flow-ref doc:name="BnW_Google_Check_Campaign_Flow"
+					doc:id="5436137b-0aa5-49c7-bf3d-5c9c4a251f13"
+					name="BnW_Google_Check_Campaign_Flow" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Response Failure message"
+					doc:id="4945b3fe-04ce-4283-bb1f-f4dd93035afa">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"success" : "false",
+	"message" : "Lead Creation Failed",
+	"reason"  : vars.leadUpdate.items[0].message
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Response Failure message"
+					doc:id="df615d5e-5071-46bd-b71c-d302be56794f" message="#[payload]" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="BnW_Google_Check_Campaign_Flow"
+		doc:id="359371ab-8451-4588-b582-5e9f9483a497">
+		<logger level="INFO"
+			doc:name="Checking Campaign Details with CampaignId"
+			doc:id="bcff36e9-85fb-438e-87ac-d53e9df106f8"
+			message="Checking campaign details with CampaignId : #[vars.id]" />
+		<salesforce:query doc:name="Query Campaign"
+			doc:id="996bc1f3-04e3-404a-803d-68916e699585"
+			config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT Id, Name
+FROM Campaign
+WHERE Campaign_Code__c = ':campaignId']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[{
+	"campaignId" : (vars.campaignId as Number)
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Choice"
+			doc:id="ee46f17f-77df-45a6-a0d5-4ad01c3692db">
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<set-variable value="#[payload[0]]"
+					doc:name="Set sfCampaign"
+					doc:id="e1b653f4-0ba2-424a-9046-7cbcb8dd74ba"
+					variableName="sfCampaign" />
+				<logger level="INFO" doc:name="Campaign already exist."
+					doc:id="8fd892bc-08af-4896-8780-92a684e7100c"
+					message="Campaign already exist : #[vars.sfCampaign]" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Campaign Not Found"
+					doc:id="0e224195-2ed9-442e-853b-8d68d892a66d"
+					message="Campaign not present. Proceeding to create a new Campaign." />
+				<flow-ref doc:name="BnW_Google_Create_Campaign_Flow"
+					doc:id="b6724954-55a5-4490-95f3-c31992b5e910"
+					name="BnW_Google_Create_Campaign_Flow" />
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="BnW_Meta_Map_Lead_To_Campaign_Flow"
+			doc:id="7a43992d-45ab-49c8-b8ba-973996423a51"
+			name="BnW_Google_Map_Lead_To_Campaign_Flow" />
+	</sub-flow>
+	<sub-flow name="BnW_Google_Create_Campaign_Flow"
+		doc:id="620af2b7-d50c-41ac-ba88-582af01e684e">
+		<logger level="INFO" doc:name="Creating a new Campaign."
+			doc:id="b2b63815-3b97-4b02-af5b-7810acaed3a5"
+			message="Creating a new Campaign." />
+		<ee:transform doc:name="Transform Message"
+			doc:id="b57e2dce-43d9-408f-8324-a29b0b709ef2">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+  Name: vars.campaignName default "Google Campaign",
+  Type: "Google Lead Ad",
+  Campaign_Code__c: vars.Id,
+  Status: "ACTIVE",
+  IsActive: true
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert objectType="Campaign"
+			externalIdFieldName="Campaign_Code__c" doc:name="Upsert"
+			doc:id="76a5bf7f-2ccf-4b85-b75c-05bc4b51bc37"
+			config-ref="Salesforce_Config" />
+		<set-variable value="#[vars.createdCampaign.items[0]]"
+			doc:name="Set Variable sfCampaign"
+			doc:id="3d2f9fca-b476-4f1b-8db7-f8ceacf72e1e"
+			variableName="sfCampaign" />
+		<logger level="INFO" doc:name="New Campaign created"
+			doc:id="64ad3d9b-a1a2-4bcf-adcf-3f7fb94a6ac6"
+			message="New Campaign created" />
+	</sub-flow>
+	<sub-flow name="BnW_Google_Map_Lead_To_Campaign_Flow"
+		doc:id="6ae7089c-5666-4f78-9e40-d52d31cf4a14">
+		<ee:transform doc:name="Transform Message"
+			doc:id="747f0822-182c-4bec-931c-834b11bfc88e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	Google_Lead_Id__c: vars.meta_data.lead_id,
+    Campaign_Name__c: vars.sfCampaign.Name,
+    Campaign__c: vars.sfCampaign.Id
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert
+			doc:name="Mapping Lead with Campaign"
+			doc:id="7af562d1-76ea-47de-91ad-efa686935c7e"
+			config-ref="Salesforce_Config" objectType="Lead"
+			externalIdFieldName="Google_Lead_Id__c" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="0ed22615-1eaf-453b-b66a-dd7aeff89b38">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	CampaignId: vars.sfCampaign.Id,
+	LeadId: vars.leadId
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create type="CampaignMember"
+			doc:name="Create Campaign Member"
+			doc:id="d799d848-9131-4146-af8e-6061aa0a27f6"
+			config-ref="Salesforce_Config" />
+		<choice doc:name="Choice"
+			doc:id="f28d4fe9-410d-475e-bd6e-4a48b4fe4a92">
+			<when expression="#[payload.successful == true]">
+				<ee:transform doc:name="Transform Message"
+					doc:id="90c5554e-c694-483a-ac98-bb9a91a5f79d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message"
+					doc:id="1f9d3680-399d-43e6-afd4-b841ca8d05b9">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": payload.items[0].exception.message
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Final Logger"
+			doc:id="e0db34ae-78b9-4407-a56a-25cefacd3374"
+			message="The Lead and Campaign updated : #[payload]" />
+	</sub-flow>
+</mule>

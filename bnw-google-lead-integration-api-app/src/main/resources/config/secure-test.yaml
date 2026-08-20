@@ -1,0 +1,10 @@
+salesforce:
+  password: "![FvG6m+m7vEvbIvb2213wyA==]"
+  consumerKey: "![XALBMq770zBovAcwK3xj5XweNOhR+C257bAvzZ3GKk0gOiiU6Cuq34WL0u5ntFgxvJi0gnlcVirPLvH+1l5fwuYNgUFTzCADoU2m5JzOi8+dkv0kltzq4Q==]"
+  
+google:
+  securedClientId: ""
+  securedClientSecret: ""
+  securedDeveloperToken: ""
+  securedRefreshToken: ""
+  securedCustomerId: ""

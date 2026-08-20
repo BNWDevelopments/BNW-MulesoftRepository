@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+    http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+    http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+    http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+    http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	
+	<error-handler name="global-error-handler">
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform doc:name="bad request message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="e4551039-d8d2-499a-ba71-eacf77b84128" name="error-message"/>
+            
+</on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform doc:name="not found message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="4b775601-b7fc-403f-91e5-e090a2b1beee" name="error-message"/>
+            
+</on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="method not allowed message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="f060791b-c6aa-4643-abe7-6353affae32e" name="error-message"/>
+            
+</on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="not acceptable message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="dd401b9e-86bc-432d-9914-d1a40f878e8b" name="error-message"/>
+            
+</on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="unsupported media type message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="e123d9d7-0aad-4f5d-ab74-bc612b6c9de9" name="error-message"/>
+            
+</on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="not implemented message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="6ebe3a20-0d6b-4f4c-8630-e9d77abef9b5" name="error-message"/>
+            
+</on-error-propagate>
+		<!-- [STUDIO:"On Error Propagate"]<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="37d6eeb5-5d1f-4cfb-9625-7c4fbdfda62e" type="SALESFORCE:BAD_REQUEST">
+			<ee:transform doc:name="sf bad request message" doc:id="1130bc7e-78c7-4ecb-8960-bd19bab934a3" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+&#45;&#45;-
+{message: "salesforce bad request"}&#93;&#93;></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="93e61b3f-873e-432f-ba18-45c329b55891" name="error-message"/>
+		</on-error-propagate> [STUDIO] -->
+		<!-- [STUDIO:"On Error Propagate"]<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c156b811-c2da-4224-a0f0-6e4c9140ea63" type="SALESFORCE:SERVER_ERROR">
+			<ee:transform doc:name="sf server error message" doc:id="5c604a00-b2a5-4ea3-b83b-4fd32ab95dc3" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+&#45;&#45;-
+{
+}&#93;&#93;></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="53bc50d7-bf66-4685-b866-58e10e769689" name="error-message"/>
+		</on-error-propagate> [STUDIO] -->
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b5e2af90-422a-430a-b14f-f8e7e0a149bd" type="SALESFORCE:CONNECTIVITY">
+			<ee:transform doc:name="sf connectivity message" doc:id="a3b3274a-55d1-446f-8de0-237e05cd307b" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="de4eb0ff-7e82-4491-be3b-5e902a25e82c" name="error-message"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a3ad13d4-7750-4df3-b3df-86e77f7ba0c4" type="SALESFORCE:TIMEOUT">
+			<ee:transform doc:name="sf timeout message" doc:id="27462b5e-977e-4ee0-915f-baab31f30386" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{message: "salesforce timeout"}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="ref to error message flow" doc:id="faa5e054-e736-483c-a6c0-e46013f5ee1a" name="error-message"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ea4c505e-effe-4bc3-a31f-ca49042b2a09" type="ANY">
+			<flow-ref doc:name="ref to error message flow" doc:id="599a7de8-0162-4b7e-96cb-596b0628dbe6" name="error-message"/>
+		</on-error-propagate>
+        
+</error-handler>
+	<sub-flow name="error-message" doc:id="6ce8429d-0134-48cf-9d11-ba9808f7bd05" >
+		<ee:transform doc:name="error message" doc:id="7ae59527-81b1-42ba-bd8e-42fd544a9718">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  successful: false,
+  message: "Lead creation failed",
+  errorMessage: error.description,
+  errorType: error.errorType
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+	</sub-flow>
+	
+	
+	
+	
+	
+	
+</mule>

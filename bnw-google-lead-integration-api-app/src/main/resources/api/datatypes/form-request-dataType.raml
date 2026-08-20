@@ -1,0 +1,60 @@
+#%RAML 1.0 DataType
+type: object
+properties:
+  lead_id:
+    type: string
+    minLength: 1
+  user_column_data:
+    type: array
+    minItems: 3               
+    items:
+      type: object
+      properties:
+        column_name:
+          type: string
+          enum: [ "Full Name", "User Email", "User Phone" ]
+        string_value:
+          type: string
+          minLength: 1
+        column_id:
+          type: string
+          minLength: 1
+  api_version?: string
+  form_id?: integer
+  campaign_id?: integer
+  google_key?: string
+  is_test?: boolean
+  gcl_id?: string
+  adgroup_id?: integer
+  creative_id?: integer
+
+
+example: |
+  {
+      "lead_id": "TeSter-123-ABCDEFGHIJKLMNOPQRSTUVWXYZ-abcdefghijklmnopqrstuvwxyz-0123456789-AaBbCcDdEeFfGgHhIiJjKkLl",
+      "user_column_data": [
+          {
+              "column_name": "Full Name",
+              "string_value": "FirstName LastName",
+              "column_id": "FULL_NAME"
+          },
+          {
+              "column_name": "User Email",
+              "string_value": "test@example.com",
+              "column_id": "EMAIL"
+          },
+          {
+              "column_name": "User Phone",
+              "string_value": "+16505550123",
+              "column_id": "PHONE_NUMBER"
+          }
+      ],
+      "api_version": "1.0",
+      "form_id": 40000000000,
+      "campaign_id": 281498015710265,
+      "google_key": "test",
+      "is_test": true,
+      "gcl_id": "TeSter-123-ABCDEFGHIJKLMNOPQRSTUVWXYZ-abcdefghijklmnopqrstuvwxyz-0123456789-AaBbCcDdEeFfGgHhIiJjKkLl",
+      "adgroup_id": 20000000000,
+      "creative_id": 30000000000
+  }

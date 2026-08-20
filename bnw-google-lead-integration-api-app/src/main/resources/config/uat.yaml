@@ -1,0 +1,19 @@
+salesforce:
+    user: "mulesoftintegration@bnwuae.com.partial"
+    cert-password: "${secure::salesforce.password}"
+    certificate: "uat-Certificate/00DWI000003aLfJ.jks"
+    security:
+        url: "https://test.salesforce.com/services/oauth2/token"
+    consumer:
+        key: "${secure::salesforce.consumerKey}"
+        
+api.id: "2827584"        
+        
+google:
+  clientId: "${secure::google.securedClientId}"
+  clientSecret: "${secure::google.securedClientSecret}"
+  developerToken: "${secure::google.securedDeveloperToken}"
+  refreshToken: "${secure::google.securedRefreshToken}"
+  customerId: "${secure::google.securedCustomerId}"
+  key: "${secure::google.securedKey}"
+  accessToken: "${secure::google.securedAccessToken}"

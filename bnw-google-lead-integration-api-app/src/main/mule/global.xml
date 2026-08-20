@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+		<configuration-properties
+    doc:name="Common properties"
+    doc:id="d02376eb-db29-4212-9d19-7986724230de"
+    file="config/common.yaml" />
+
+<configuration-properties
+    doc:name="Environment properties"
+    doc:id="21104504-d8be-4f0e-9312-97b1f67d3637"
+    file="config/${env}.yaml" />
+		
+	<configuration doc:name="Configuration" doc:id="86a59ab9-ddb0-4470-8639-014a5b6d8561" defaultErrorHandler-ref="global-error-handler" />
+	<global-property doc:name="Global Property"
+		doc:id="40858550-8625-427a-988b-8bf32fd76948" name="env" value="uat" />
+	<global-property doc:name="Global Property"
+		doc:id="a0fa33af-d990-4f92-b637-7af1ea9259cc" name="secureKey"
+		value="bnw-uat" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="df836de2-77ce-422e-8832-bb416fabb567" >
+		<salesforce:jwt-connection consumerKey="${salesforce.consumer.key}" keyStore="${salesforce.certificate}" principal="${salesforce.user}" tokenEndpoint="${salesforce.security.url}" storePassword="${salesforce.cert-password}">
+			<reconnection >
+				<reconnect frequency="${salesforce.frequency}" count="${salesforce.reconnection_attempts}" />
+			</reconnection>
+		</salesforce:jwt-connection> 
+</salesforce:sfdc-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="07d4d0de-7c46-48be-8456-e70d9d6a5796" >
+		<http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.timeout}"/>
+	</http:listener-config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="07803077-2953-475d-9210-c743cb4a31bd" file="config/secure-${env}.yaml" key="${secureKey}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<http:request-config name="HTTP_GoogleAd_Request_configuration" doc:name="HTTP Request configuration" doc:id="9c534142-99dd-4504-b852-aeb74c8a412b" >
+		<http:request-connection host="googleads.googleapis.com" protocol="HTTPS"/>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="d7244854-3d58-4557-a8cc-f082a8ad8516" >
+		<http:request-connection host="oauth2.googleapis.com" protocol="HTTPS"/>
+	</http:request-config>
+	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="768b41ac-3dc0-4387-b01c-0115ddefecf9" flowRef="bnw-google-ad-lead-integration-api-main" />
+
+</mule>

@@ -1,0 +1,24 @@
+salesforce:
+    user: "mulesoftintegration@bnwuae.com.prod"
+    cert-password: "${secure::salesforce.password}"
+    certificate: "prod-Certificate/MulesoftBNWProd.jks"
+    security:
+        token: "${secure::salesforce.token}"
+        url: "https://login.salesforce.com/services/oauth2/token"
+    consumer:
+        key: "${secure::salesforce.consumerKey}"
+        secret: "${secure::salesforce.consumerSecret}"
+        
+api.id: "2827596"        
+        
+
+facebook:
+    access_token: "${secure::facebook.access_token}"
+    
+google:
+  clientId: "${secure::google.securedClientId}"
+  clientSecret: "${secure::google.securedClientSecret}"
+  developerToken: "${secure::google.securedDeveloperToken}"
+  refreshToken: "${secure::google.securedRefreshToken}"
+  customerId: "${secure::google.securedCustomerId}"
+  accessToken: "${secure::google.securedAccessToken}"

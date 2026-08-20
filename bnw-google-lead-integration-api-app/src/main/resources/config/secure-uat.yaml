@@ -1,0 +1,12 @@
+salesforce:
+  password: "![EPKWrTLOZbAjmS43irAI0Q==]"
+  consumerKey: "![6sUJBrdc18hgVJi10u/5En26AHPvmEUDodlsPxZMVdMQfk1GIqYthtWydfkCGZbz0hQk/t9HPMKQDyeQoqJQhKDfr2ps6z27UGPq8SPi4PR8qgxBAl2h1Q==]"
+ 
+google:
+  securedClientId: "![ksFyd6O8T2W5ED7u9G5GmkC+NQ4qc5JgsM3EUzSRtVxegV590n18+AMOJDe0acX0Q9ow9wLhoMpAHBIzwrbtI4qijekEF6Cx3WEkLCt+6mA=]"
+  securedClientSecret: "![BMK+5yInW7W7IAEiLC/hmi1Gm94KjXx4+SkydnLSlsf4kTfBowq+MQ==]"
+  securedDeveloperToken: "![pUcwAXbuh581aCbqZdEpL65Nqx7Zygkc]"
+  securedRefreshToken: "![dH0NX/OCSFLpaSkM/HmeqbKn2BijUxp24KjnqdI8sro+YES1ppXHU7gWRDoM8ogyvX31WcfxJAaTcarHyUjjzhKczwynTv/N4juvOROSRu/Ypil+UELzrLIEZlar7er0Cs4xbIkFQ88=]"
+  securedCustomerId: "![2q+WFTOjE1Lc9JDY+/mXAg==]"
+  securedKey: ""
+  securedAccessToken: ""
