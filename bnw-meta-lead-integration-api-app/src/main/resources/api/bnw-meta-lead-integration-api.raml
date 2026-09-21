@@ -1,0 +1,43 @@
+#%RAML 1.0
+title: bnw-meta-lead-integration-api
+version: v1
+
+types:
+  form-request-data: !include /datatypes/post-request-datatype.raml
+  form-response-data: !include /datatypes/post-response-datatype.raml
+
+
+/meta-integration:
+  post:
+    description: Receives lead webhook from Meta, fetches full lead details using leadgen_id, and stores them in Salesforce.
+    body:
+      application/json:
+        type: form-request-data
+    responses:
+      200:
+        body:
+          application/json:
+            type: form-response-data
+
+  get:
+    queryParameters:
+      hub.mode:
+        type: string
+        required: true
+        example: subscribe
+      hub.verify_token:
+        type: string
+        required: true
+        example: test123
+      hub.challenge:
+        type: string
+        required: true
+        example: "12345670"    
+    responses:
+      200:
+        body:
+          text/plain:
+            example: "1234567890"
+      
+
+  

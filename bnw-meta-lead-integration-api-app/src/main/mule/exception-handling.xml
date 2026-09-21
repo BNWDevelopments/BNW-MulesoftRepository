@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+    http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+    http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+    http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+    http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+
+	<error-handler name="global-error-handler">
+
+		<!-- APIKIT errors -->
+		<on-error-propagate type="APIKIT:BAD_REQUEST">
+			<set-variable variableName="httpStatus" value="400" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate type="APIKIT:NOT_FOUND">
+			<set-variable variableName="httpStatus" value="404" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate
+			type="APIKIT:METHOD_NOT_ALLOWED">
+			<set-variable variableName="httpStatus" value="405" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate
+			type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+			<set-variable variableName="httpStatus" value="415" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<!-- META / HTTP errors -->
+		<on-error-propagate type="HTTP:BAD_REQUEST">
+			<set-variable variableName="httpStatus" value="400" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate type="HTTP:UNAUTHORIZED">
+			<set-variable variableName="httpStatus" value="401" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate type="HTTP:FORBIDDEN">
+			<set-variable variableName="httpStatus" value="403" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate type="HTTP:TOO_MANY_REQUESTS">
+			<set-variable variableName="httpStatus" value="429" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<!-- Salesforce -->
+		<on-error-propagate type="SALESFORCE:CONNECTIVITY">
+			<set-variable variableName="httpStatus" value="500" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<on-error-propagate type="SALESFORCE:TIMEOUT">
+			<set-variable variableName="httpStatus" value="504" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+		<!-- Catch-all -->
+		<on-error-propagate type="ANY">
+			<set-variable variableName="httpStatus" value="500" />
+			<flow-ref name="error-message" />
+		</on-error-propagate>
+
+	</error-handler>
+	<sub-flow name="error-message"
+		doc:id="6ce8429d-0134-48cf-9d11-ba9808f7bd05">
+		<ee:transform doc:name="Build Error Response" doc:id="aeab83d0-c56e-4aae-8b84-52245d8c4020">
+			<ee:message>
+				<ee:set-payload><![CDATA[
+%dw 2.0
+output application/json
+---
+{
+	success: false,
+	status: vars.httpStatus,
+	message: "Lead creation failed",
+	errorType: error.errorType.identifier
+}
+]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+			</ee:variables>
+		</ee:transform>
+	</sub-flow>
+</mule>

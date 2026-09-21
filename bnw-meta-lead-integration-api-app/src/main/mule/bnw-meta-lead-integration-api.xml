@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+    <apikit:config name="bnw-meta-lead-integration-api-config" api="bnw-meta-lead-integration-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="bnw-meta-lead-integration-api-main" doc:id="a4042e87-1225-40b7-bd1e-7d09535631e9">
+        <http:listener config-ref="HTTP_Listener_config" path="${http.path}" doc:name="listener">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[{
+	"Content-Type" : "text/plain"
+}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="bnw-meta-lead-integration-api-config" />
+		<error-handler ref="global-error-handler" />
+        
+    </flow>
+    <flow name="get:\meta-integration:bnw-meta-lead-integration-api-config" doc:id="00de40f5-764a-46de-b852-c986c67c8c63">
+        <flow-ref doc:name="ref to fetch meta integration-flow" doc:id="3a4838b6-d764-44b1-ad62-3ef63fac13ea" name="bnw-verify-token-impl" />
+		<error-handler ref="global-error-handler" />
+    </flow>
+    <flow name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="6eb4b98d-9d4f-4595-b2de-99d3dc80bed7">
+        <flow-ref doc:name="ref to create meta-integration flow" doc:id="690554dc-72b1-46a2-8494-7d8080dc9d06" name="bnw-lead-integration-impl" />
+		<error-handler ref="global-error-handler" />
+    </flow>
+</mule>

@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<sub-flow name="bnw-verify-token-impl"
+		doc:id="3b43640e-179f-41ca-9c32-de9a399eae87">
+		<logger level="INFO" doc:name="attributes in token flow"
+			doc:id="d8e2f4e4-0eec-4e43-a36e-1e9d87767dfe" message="#[attributes]" />
+		<choice doc:name="Choice"
+			doc:id="8f478fe4-d025-44be-80d6-12d3a07d7056">
+			<when
+				expression="#[attributes.queryParams.'hub.verify_token' == 'bnwMetaIntegration']">
+				<logger level="INFO" doc:name="hub challenge"
+					doc:id="4fb0b237-ada8-4ff8-84e0-d8a81851704d"
+					message="#[attributes.queryParams.'hub.challenge']" />
+				<set-payload
+					value="#[attributes.queryParams.'hub.challenge']"
+					doc:name="hub challenge"
+					doc:id="60ca3d6b-2b45-4633-8e40-0c4b17582222" />
+			</when>
+			<otherwise>
+				<set-variable value="#[403]" doc:name="error variable"
+					doc:id="c49001c6-ab6f-4112-bab4-3013fb81d61b"
+					variableName="responseStatus" />
+				<set-payload value='#["Invalid verify token"]'
+					doc:name="error message"
+					doc:id="cdfde034-daa8-4e50-a2d3-826d9346dad4" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="bnw-lead-integration-impl"
+		doc:id="bca0258a-3e30-4653-ba08-1627dc3e1595">
+		<logger level="INFO" doc:name="Input payload"
+			doc:id="5bcd08ed-fc0c-4059-8094-1f2541b5d33d"
+			message="Incoming Meta webhook payload: #[payload]" />
+		<ee:transform doc:name="Extract Necessary Values"
+			doc:id="3f212f61-4782-4b71-a017-0bdcdeece3ce">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="leadgen_id"><![CDATA[%dw 2.0
+output application/java
+---
+payload.entry[0].changes[0].value.leadgen_id
+]]></ee:set-variable>
+				<ee:set-variable variableName="ad_id"><![CDATA[%dw 2.0
+output application/java
+---
+payload.entry[0].changes[0].value.ad_id]]></ee:set-variable>
+				<ee:set-variable variableName="form_id"><![CDATA[%dw 2.0
+output application/java
+---
+payload.entry[0].changes[0].value.form_id]]></ee:set-variable>
+				<ee:set-variable variableName="access_token"><![CDATA[%dw 2.0
+output application/java
+---
+p('facebook.token')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO"
+			doc:name="Calling Facebook with leadgen_id"
+			doc:id="853a75cd-6373-478d-badd-413b5750683e"
+			message="Calling Facebook with leadgen_id  #[vars.leadgen_id]" />
+		<http:request method="GET"
+			doc:name="Fetch Lead details from Meta with Leadgen Id"
+			doc:id="65c4856b-f648-45fa-941d-19fafebdf339"
+			path="/v23.0/{leadgen_id}" sendCorrelationId="AUTO"
+			config-ref="HTTP_Request_configuration">
+			<http:uri-params><![CDATA[#[{ leadgen_id: vars.leadgen_id }]]]></http:uri-params>
+			<http:query-params><![CDATA[#[{
+    access_token: vars.access_token,
+    fields: "created_time,field_data,ad_id,form_id,campaign_id"
+}]]]></http:query-params>
+		</http:request>
+		<set-variable value="#[payload]" doc:name="leadDetails"
+			doc:id="d706ce0a-5b17-4b19-a4d4-9e1e0c865297"
+			variableName="leadDetails" />
+		<logger level="INFO" doc:name="Calling Facebook with ad_id"
+			doc:id="b31f2eaf-b21d-43d7-8eba-023e16cd35a1"
+			message="Calling Facebook with ad_id  #[vars.ad_id]" />
+		<http:request method="GET" doc:name="Retrieve Ad details request" doc:id="4b92e45b-09f9-4e21-90db-18ad603d04df" path="/v23.0/{ad_id}" 
+			config-ref="HTTP_Request_configuration"> <http:uri-params><![CDATA[#[{ ad_id: vars.ad_id }]]]></http:uri-params> <http:query-params><![CDATA[#[output application/java
+---
+{
+	access_token: vars.access_token,
+	fields: "name,adset{name},campaign{id,name},adcreatives{object_story_spec}"
+}]]]></http:query-params> </http:request>
+		<set-variable value="#[payload]" doc:name="adDetails"
+			doc:id="7bc9eb7a-763e-4ed5-807b-46a94a755caf"
+			variableName="adDetails" />
+		<set-variable value="#[vars.adDetails.campaign.id]"
+			doc:name="campaignId" doc:id="21e6997b-17af-4b98-a24f-5c18f934ac6c"
+			variableName="campaignId" />
+		<flow-ref doc:name="BnW-Meta-Create_Lead_In_Salesforce_Flow"
+			doc:id="eb626136-7b5a-44f7-85e4-5b671dd849e7"
+			name="BnW-Meta-Create_Lead_In_Salesforce_Flow" />
+	</sub-flow>
+	<sub-flow name="BnW-Meta-Create_Lead_In_Salesforce_Flow"
+		doc:id="a9b13381-a403-4979-868e-31a1cb595d14">
+		<ee:transform
+			doc:name="map details if campaign is present"
+			doc:id="13f15656-04c7-4c8a-96dd-3f126307d985">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+
+// Normalize Meta fields into a map
+var normalizedFields =
+    (vars.leadDetails.field_data default [])
+        reduce ((item, acc = {}) ->
+            acc ++ {
+                (lower(item.name)): 
+				// Handle both string and array safely
+				if (item.values is Array)
+                        item.values[0]
+                    else
+                        item.values
+            }
+        )	
+
+// Extract values using aliases
+
+var lastName =
+    normalizedFields.last_name
+    default ""
+
+var firstName =
+    normalizedFields.first_name
+    default ""
+        
+var email =
+    normalizedFields.email
+    default normalizedFields.email_address
+    default null
+
+var phone =
+    normalizedFields.phone_number
+    default normalizedFields.phone
+    default normalizedFields.mobile
+    default null
+
+// Name split
+//var nameParts = fullName splitBy " "
+//var firstName = if (sizeOf(nameParts) > 1) nameParts[0] else fullName
+//var lastName =
+//    if (sizeOf(nameParts) > 1)
+//        (nameParts[1 to -1] joinBy " ")
+//    else
+//        "Unknown"
+
+---
+[{
+    FirstName: firstName,
+    LastName: lastName,
+    Email: if (email == "") null else email,
+    MobilePhone: if (phone == "") null else phone,
+    LeadSource: "Digital",
+    Platform_Source__c: "Facebook",
+    Meta_Leadgen_ID__c: vars.leadgen_id
+}]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Payload to upsert" doc:id="4f1c2c6d-e72c-42a2-afb3-f0b9b7011c55" message="Fields to upsert in Salesforce #[payload]"/>
+		<try doc:name="Try" doc:id="6206cbeb-d759-47d7-982f-aa84bb3c9f7e">
+			<salesforce:upsert objectType="Lead"
+				doc:name="Create/Upsert a Lead"
+				doc:id="c06a84c6-da87-462b-b2d6-24d7e3447abb"
+				config-ref="Salesforce_Config"
+				externalIdFieldName="Meta_Leadgen_ID__c" />
+			<ee:transform doc:name="Lead update"
+				doc:id="62d7c16e-daff-438d-895b-96c401907bb4">
+				<ee:message />
+				<ee:variables>
+					<ee:set-variable variableName="leadResponse"><![CDATA[%dw 2.0
+output application/java
+---
+payload
+        ]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<error-handler>
+				<on-error-continue
+					when="#[error.description contains 'INVALID_SESSION_ID']"
+					doc:name="Handle Expired Session" enableNotifications="true"
+					logException="true">
+
+					<salesforce:upsert objectType="Lead"
+						doc:name="Create/Upsert a Lead"
+						doc:id="6e893096-bdcd-4fc2-8750-cdc28304ef61"
+						config-ref="Salesforce_Config"
+						externalIdFieldName="Meta_Leadgen_ID__c" />
+					<ee:transform doc:name="Lead update">
+						<ee:message />
+						<ee:variables>
+							<ee:set-variable variableName="leadResponse"><![CDATA[%dw 2.0
+output application/json
+---
+payload
+            ]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</on-error-continue>
+
+				<!-- Catch any other errors -->
+			</error-handler>
+		</try>
+		<choice doc:name="Choice"
+			doc:id="95808ad2-ec5c-4af5-9d31-f316ecbbed75">
+			<when expression="#[vars.leadResponse.successful == true]">
+				<ee:transform doc:name="Set leadId var">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="leadId"><![CDATA[%dw 2.0
+output application/json
+---
+vars.leadResponse.items[0].id
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="Response Success message"
+					doc:id="6c87ed1d-94e0-48d2-9781-fefc46ab7ba8">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  success: payload.successful,
+  message: ((vars.leadId default "Record") as String) ++ " is Created Successfully"
+}
+]]></ee:set-payload>
+
+					</ee:message>
+					<ee:variables>
+					</ee:variables>
+
+				</ee:transform>
+				<logger level="INFO" doc:name="Response Success message"
+					doc:id="abfdd4fa-7cd6-482f-9571-9dad4c662fe8" message="#[payload]" />
+				<ee:transform
+					doc:name="Reset payload for campaign flow"
+					doc:id="4ea09d13-4beb-4ef6-a975-fddb6cb10c46">
+					<ee:message>
+						<ee:set-payload><![CDATA[ %dw 2.0
+output application/java
+---
+null]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<flow-ref doc:name="BnW_Meta_Check_Campaign_Flow"
+					doc:id="cf127369-9317-4035-bc99-d0ae4dc90f7b"
+					name="BnW_Meta_Check_Campaign_Flow" />
+
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Response Failure message"
+					doc:id="cbacd5c6-7878-4a63-a83f-5d9165c62b08">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"success" : "false",
+	"message" : "Lead Creation Failed",
+	"reason"  : vars.leadResponse.items[0].message
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Response Failure message"
+					doc:id="ec2241e2-79e6-48ca-a798-644726a54ce2" message="#[payload]" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="BnW_Meta_Check_Campaign_Flow"
+		doc:id="ece871c2-5cb1-4963-83ae-d7791d213f4a">
+		<logger level="INFO"
+			doc:name="Checking Campaign Details with CampaignId "
+			doc:id="d206ebb3-a93e-4960-84ca-5aed68a27346"
+			message="Checking Campaign Details with CampaignId : #[vars.adDetails.campaign.id]" />
+		<salesforce:query doc:name="Query Campaign"
+			doc:id="53981331-ed20-40c1-8780-a6064128fe3f"
+			config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT Id, Name
+FROM Campaign
+WHERE Campaign_Code__c = ':campaignId']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[{
+	"campaignId" : (vars.campaignId as Number)
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<choice doc:name="Choice"
+			doc:id="65df5d5e-ebff-4edf-8786-89507473faa3">
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<set-variable value="#[payload[0]]"
+					doc:name="Set sfCampaign"
+					doc:id="695b52ae-c7de-49fc-ae1d-e574afef2ab0"
+					variableName="sfCampaign" />
+				<logger level="INFO" doc:name="Campaign already exist."
+					doc:id="e472521a-b788-4283-81ec-095f75f9a781"
+					message="Campaign already exist : #[vars.sfCampaign]" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Campaign Not Found"
+					doc:id="7e6871a1-9377-4bbe-916e-467d2ffebe6f"
+					message="Campaign not present. Proceeding to create a new Campaign." />
+				<flow-ref doc:name="BnW_Meta_Create_Campaign_Flow"
+					doc:id="4b174522-45db-4b1c-a264-9d3c9373682c"
+					name="BnW_Meta_Create_Campaign_Flow" />
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="BnW_Meta_Map_Lead_To_Campaign_Flow"
+			doc:id="8204b037-2b34-45c8-b189-57123a6a6d58"
+			name="BnW_Meta_Map_Lead_To_Campaign_Flow" />
+	</sub-flow>
+	<sub-flow name="BnW_Meta_Create_Campaign_Flow"
+		doc:id="012446a8-aedc-4dab-aa35-0728bf364154">
+		<logger level="INFO" doc:name="Creating a new Campaign."
+			doc:id="d10530ad-c992-4522-8ebb-4f9f8b678cb1"
+			message="Creating a new Campaign." />
+		<ee:transform doc:name="Build Campaign create payload"
+			doc:id="7598680e-0cc8-4dac-ae24-62c1cb0d3c6b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+  Name: vars.adDetails.campaign.name default "Facebook Campaign",
+  Type: "Facebook Lead Ad",
+  Campaign_Code__c: vars.adDetails.campaign.id,
+  Status: "ACTIVE",
+  IsActive: true
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Payload to upsert" doc:id="db51df2d-5b6b-4097-adf5-66cb4169a402" message="Campaign payload to insert #[payload]"/>
+		<salesforce:upsert objectType="Campaign"
+			doc:name="Upsert Campaign"
+			doc:id="315f5d23-75c1-41d7-b9ff-7f5391781b6a"
+			config-ref="Salesforce_Config" externalIdFieldName="Campaign_Code__c"
+			target="createdCampaign" />
+		<set-variable value="#[vars.createdCampaign.items[0]]"
+			doc:name="Set Variable" doc:id="d9130fa5-cdd6-484d-9b7b-973868f32732"
+			variableName="sfCampaign" />
+		<logger level="INFO" doc:name="New Campaign created"
+			doc:id="9cbd52cd-f563-4f40-82f4-29c136fc7e5a" message="#[payload]" />
+	</sub-flow>
+	<sub-flow name="BnW_Meta_Map_Lead_To_Campaign_Flow"
+		doc:id="37c8f616-0274-4067-b151-87a508b73db2">
+		<ee:transform doc:name="Transform Message"
+			doc:id="a88fcdb9-f79b-4d67-852f-d7664668168a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	Meta_Leadgen_ID__c: vars.leadgen_id,
+    Campaign_Name__c: vars.sfCampaign.Name,
+    Campaign__c: vars.sfCampaign.Id
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert objectType="Lead"
+			doc:name="Mapping Lead with Campaign"
+			doc:id="271cea0f-36a4-4bea-ac9f-64f2b0f379c0"
+			config-ref="Salesforce_Config"
+			externalIdFieldName="Meta_Leadgen_ID__c" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="94486e05-3e64-4679-b43e-80271b4a8452">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[{
+	CampaignId: vars.sfCampaign.Id,
+	LeadId: vars.leadId
+}]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create Campaign Member"
+			doc:id="6c11c9e1-b438-4283-afa2-b476744c7d25"
+			config-ref="Salesforce_Config" type="CampaignMember" />
+		<choice doc:name="Choice"
+			doc:id="6a309f04-de3c-4275-883b-7a136762a1cf">
+			<when expression="#[payload.successful == true]">
+				<ee:transform doc:name="Transform Message"
+					doc:id="924bf5b2-d646-491c-9d02-63bfdacbfbf1">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message"
+					doc:id="e2cd9729-5017-4f8b-ac04-68d08ee6a3a5">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": payload.items[0].exception.message
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Final Logger"
+			doc:id="75a7972d-9c2c-434b-9b31-439d47b23ee5"
+			message="The Lead and Campaign updated : #[payload]" />
+	</sub-flow>
+</mule>

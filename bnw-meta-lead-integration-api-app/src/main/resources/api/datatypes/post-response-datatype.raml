@@ -1,0 +1,12 @@
+#%RAML 1.0 DataType
+type: object 
+properties:
+  success: boolean
+  message: string
+  salesforceLeadId?: string
+example: |
+  {
+    "success": true,
+    "message": "Lead created successfully",
+    "salesforceLeadId": "00Q5g00000ABCDe123"
+  }

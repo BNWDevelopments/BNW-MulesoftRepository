@@ -1,0 +1,62 @@
+#%RAML 1.0 DataType
+type: object
+properties:
+  object: string
+  entry: 
+    type: array
+    items:
+      type: object
+      properties:
+        id: string
+        time: integer
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              field: string
+              value:
+                type: object
+                properties:
+                  adgroup_id:
+                    type: string | nil
+                    required: false
+                  ad_id:
+                    type: string | nil
+                    required: false
+                  created_time:
+                    type: integer | nil
+                    required: false
+                  leadgen_id:
+                    type: string
+                    required: true
+                  page_id:
+                    type: string | nil
+                    required: false
+                  form_id:
+                    type: string | nil
+                    required: false
+
+example: |
+  {
+    "object": "page",
+    "entry": [
+      {
+        "id": "107676598707070",
+        "time": 1753683968,
+        "changes": [
+          {
+            "field": "leadgen",
+            "value": {
+              "adgroup_id": null,
+              "ad_id": null,
+              "created_time": 1753683963,
+              "leadgen_id": "72345678177",
+              "page_id": "23456789",
+              "form_id": "14134567890"
+            }
+          }
+        ]
+      }
+    ]
+  }

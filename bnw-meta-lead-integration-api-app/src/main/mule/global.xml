@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+<configuration-properties doc:name="Configuration properties" doc:id="5bb31469-93d0-4c69-80ab-d75e9e74bac1" file="config/${env}.yaml" />
+	<configuration doc:name="Configuration" doc:id="c89ea26b-8f41-465e-8f11-94a35b50985b" defaultErrorHandler-ref="global-error-handler" />
+	<global-property doc:name="Global Property" doc:id="32334a0f-4297-4174-8427-acb22ae9c319" name="secureKey" value="bnw-prod" />
+	 <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="da84347d-dd30-4d19-a856-626a337495c4" >
+    <http:request-connection protocol="HTTPS" host="graph.facebook.com">
+			<reconnection >
+				<reconnect />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="338d4a58-e6ad-4d07-9349-020061c6cd7d" >
+		<salesforce:jwt-connection consumerKey="${salesforce.consumer.key}" keyStore="${salesforce.certificate}" principal="${salesforce.user}" tokenEndpoint="${salesforce.security.url}" storePassword="${salesforce.cert-password}">
+			<reconnection >
+				<reconnect frequency="${salesforce.frequency}" count="${salesforce.reconnection_attempts}" />
+			</reconnection>
+		</salesforce:jwt-connection> 
+</salesforce:sfdc-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3567e6d1-8309-4107-a640-c92dbac9decc" >
+		<http:listener-connection host="${http.host}" port="${http.port}" readTimeout="${http.timeout}"/>
+	</http:listener-config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="cbffe78e-37a6-4a5e-b167-8498a1b7b753" file="config/secure-${env}.yaml" key="${secureKey}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="3a6285db-7e9d-4375-a855-1eff0ba62d4e" file="config\common.yaml" />
+	<global-property doc:name="Global Property" doc:id="1785170b-2088-4610-b31f-ea79affc073b" name="env" value="prod" />
+</mule>

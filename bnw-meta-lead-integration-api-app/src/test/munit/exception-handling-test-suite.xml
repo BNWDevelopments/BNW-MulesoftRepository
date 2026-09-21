@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<munit:config name="exception-handling-test-suite.xml" />
+ <munit:test name="meta-api-bad-request-test" description="Meta API returns 400">
+		<munit:behavior>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="4ef4d32c-1f7d-4ab2-876a-d98747ad6c73" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="65c4856b-f648-45fa-941d-19fafebdf339" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:BAD_REQUEST" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+        </munit:behavior>
+		<munit:execution>
+            <munit:set-event doc:name="Set Event" doc:id="1c156cf2-1985-47a2-bf59-61de7fc7d994" >
+				<munit:payload value="#[readUrl('classpath://errorhandlingFlow/invalid_meta_lead_details_requester.dwl')]" />
+			</munit:set-event>
+			<try doc:name="Try" doc:id="422f7112-fccd-466d-8c7f-e28ae5a1454d" >
+				<flow-ref name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="444f191d-3593-45bc-913a-8d972373ec43" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="923fb604-364e-4b7e-95fe-f82fdd08cd49" >
+						<logger level="INFO" doc:name="Logger" doc:id="31cd65b9-d809-4b18-9c93-0297a3de6843" message="Continuing the flow"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+        </munit:execution>
+		<munit:validation>
+			<munit-tools:assert doc:name="Assert expression" doc:id="dcef6070-ec12-4d69-bbc0-12e57fc88a1c" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import errorhandlingFlow::badRequest_responsePayload
+---
+badRequest_responsePayload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+
+
+    </munit:test>
+	<munit:test name="meta-api-salesforce-connectivity-test" doc:id="07ec76d7-9ed2-4833-b850-6f7912515b42" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="3ddb45a1-03a1-464c-ae94-818450bf270b" processor="salesforce:upsert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="c06a84c6-da87-462b-b2d6-24d7e3447abb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="SALESFORCE:CONNECTIVITY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="f2f18703-bda1-47d8-b8ef-3216ffdeb9c0" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/incoming_payload.dwl')]" />
+			</munit:set-event>
+			<try doc:name="Try" doc:id="c224bcae-a622-49de-812e-3ac995dc5cb6" >
+				<flow-ref doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="2cb0d025-4108-4b68-b239-5a11f6544465" name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6ee77be8-db5c-4a53-909a-5bfde3d162ab" >
+						<logger level="INFO" doc:name="Logger" doc:id="cdc88fa9-f069-4f0a-ba85-39d40a9f525d" message="Continue the flow."/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert expression" doc:id="148e7458-819d-446a-9102-4fcdb8df3b4c" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import errorhandlingFlow::salesforce_error_response
+---
+salesforce_error_response::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="meta-api-salesforce-timeout-test" doc:id="62e66601-67bc-49c7-bf82-82e202a5976d" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="6e4259a5-e20f-4983-a8bb-ba1c02c2474b" processor="salesforce:upsert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="c06a84c6-da87-462b-b2d6-24d7e3447abb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="SALESFORCE:TIMEOUT" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="7179d2d2-1d9d-4d9f-8818-a213c19fe7a8" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/incoming_payload.dwl')]" />
+			</munit:set-event>
+			<try doc:name="Try" doc:id="9dcf4271-ecdf-4504-94e1-9e0709b492d4" >
+				<flow-ref doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="992e3e1e-4313-479c-a5a3-b563c3c3cf08" name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6dce2b87-d50d-4acb-834d-5ff8a28e50a1" >
+						<logger level="INFO" doc:name="Logger" doc:id="ed2e7820-1f3e-4f74-a476-fca4680e849d" message="Contine the flow."/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert expression" doc:id="d81bee16-1bc0-4fec-865d-78191426fb21" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import errorhandlingFlow::salesforce_timeout_response
+---
+salesforce_timeout_response::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="meta-api-too-many-requests-test" doc:id="7675eaca-7e7b-4b1b-999c-08d4f0f14287" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="ce2d50f5-dc4b-4dc3-a6c5-b8c85f4acb8d" processor="http:request" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="65c4856b-f648-45fa-941d-19fafebdf339" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:TOO_MANY_REQUESTS" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="e6dcf3a5-240c-46a7-bf66-8c1f3aa2c2a6" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/incoming_payload.dwl')]" />
+			</munit:set-event>
+			<try doc:name="Try" doc:id="451751af-2088-4c31-af61-65507ac93a78" >
+				<flow-ref doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="9934fa0a-f703-4b3e-bf18-d0ddefe96b9b" name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="88cf2496-4d94-4a1d-b028-e3387e8f89af" >
+						<logger level="INFO" doc:name="Logger" doc:id="4b469615-67ff-4b8a-baaa-b4478aac205d" message="Contine the flow." />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert expression" doc:id="a589b2a1-16c2-4201-9a0f-9fdee8300fdf" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import errorhandlingFlow::toomany_request
+---
+toomany_request::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="meta-api-forbidden-test" doc:id="d9ce1eb2-40aa-4501-ad70-18e018281395">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="819a81dc-d302-4d23-b344-b17cb363c1f3" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="65c4856b-f648-45fa-941d-19fafebdf339" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:FORBIDDEN" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="d5db56a3-2be9-4bf4-b1c2-425faab2871d" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/incoming_payload.dwl')]" />
+			</munit:set-event>
+			<try doc:name="Try" doc:id="c4800bca-8ea6-420f-bb53-d6dbfbb42620" >
+				<flow-ref doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="3360a107-ceda-4799-acee-b9d577ae70cf" name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ac1b750d-478e-4a71-9970-1d1df7ff7e82" >
+						<logger level="INFO" doc:name="Logger" doc:id="dac8f4b0-88a0-4ba7-8137-14d55b3acfc9" message="Contine the flow." />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert expression" doc:id="0f48189f-2078-4107-ae14-c615f104965b" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import errorhandlingFlow::forbidden_payload
+---
+forbidden_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="meta-api-unauthorized-test" doc:id="7057d136-4c8a-4e66-b007-36217196969c" >
+		<munit:behavior>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="055ef51f-f0cc-4373-8a46-65a5c0a336fc" processor="salesforce:upsert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="c06a84c6-da87-462b-b2d6-24d7e3447abb" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="HTTP:UNAUTHORIZED" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="a9516397-2243-43b9-a939-6e9c7d450d01" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/incoming_payload.dwl')]" />
+			</munit:set-event>
+			<try doc:name="Try" doc:id="411d2cc3-4d65-429e-997f-a3bc05bc8f5f" >
+				<flow-ref doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="2728c5ee-b7da-49be-8e3d-4a99249991ea" name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0827c8f5-132b-48c7-8aec-6a6c82602884" >
+						<logger level="INFO" doc:name="Logger" doc:id="aa6a8fca-2b1b-41d0-8be1-cc4b2640e753" message="Contine the flow." />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert doc:name="Assert expression" doc:id="500d7e0f-b058-4352-9e86-6b7bd8b77950" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import errorhandlingFlow::un_authorized_payload
+---
+un_authorized_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="apikit-bad-request-test" doc:id="135cab62-2ef5-4066-bbd8-cb683832171c" description="APIKIT BAD_REQUEST when payload is invalid">
+		<munit:execution>
+			<try doc:name="Try" doc:id="6d0515b4-a359-404f-ac76-c7aea44f468d" >
+				<flow-ref doc:name="bnw-meta-lead-integration-api-main" doc:id="e91dd32a-2dd7-46a5-9415-d8559af1474a" name="bnw-meta-lead-integration-api-main" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7251f9c2-4b64-40b2-985f-cdf13de4f9d4" >
+						<logger level="INFO" doc:name="Logger" doc:id="137fe70d-d9ec-4192-8cad-b512b4d3efc3" message="Continue the flow."/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="7b25444b-d10e-4461-8fd5-8c10df715ed8" actual="#[payload.status]" expected="500"/>
+		</munit:validation>
+	</munit:test>
+
+</mule>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<munit:config name="bnw-meta-lead-integration-impl-test-suite.xml" />
+	<munit:test name="200-success-bnw-verify-token" doc:id="f4dacd93-4232-4306-83c8-68143c18e6c0" description="Test">
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="534b44bd-5494-43c9-b88a-97746f74779c" >
+				<munit:attributes value="#[readUrl('classpath://verifyTokenFlow/input_attributes.dwl')]" />
+			</munit:set-event>
+			<flow-ref doc:name="get:\meta-integration:bnw-meta-lead-integration-api-config" doc:id="fbabecac-569d-42fd-bc54-e9f7b53dc882" name="get:\meta-integration:bnw-meta-lead-integration-api-config"/>
+		</munit:execution>
+		<munit:validation >
+			<logger level="INFO" doc:name="Logger" doc:id="94d79ea1-685d-4ba7-8fcd-38c10a41a4f8" message='#[attributes.queryParams."hub.challenge"]'/>
+			<munit-tools:assert doc:name="Assert expression" doc:id="15366c90-04c7-465d-9e0a-dd76906e1328" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import verifyTokenFlow::verify_token_response
+---
+verify_token_response::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="403-invalid-verify-token-failure" doc:id="47f3ba7e-5807-4d85-8422-7ce5951b9500" >
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="751a2151-1c5b-407e-8c10-e5dd132c94d8" >
+				<munit:attributes value="#[readUrl('classpath://verifyTokenFlow/input_attributes_error.dwl')]" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to bnw-verify-token-impl" doc:id="1d24bfc6-b678-47ca-935e-6e25d74046de" name="bnw-verify-token-impl"/>
+		</munit:execution>
+		<munit:validation >
+			<logger level="INFO" doc:name="Logger" doc:id="a7ca015a-c7d5-40bf-92e6-ec6e4b40dedd" message="#[payload]"/>
+			<munit-tools:assert doc:name="Assert expression" doc:id="76a4223a-f306-4737-95be-91fc66988f0f" >
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import verifyTokenFlow::verify_token_error_response
+---
+verify_token_error_response::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="200-success-bnw-lead-integration-impl-flow" doc:id="523a3879-0881-4ae9-b4dc-4c1e4ada807c" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Fetch Lead Details Requester" doc:id="1d7e48b4-f74d-4d18-9a42-1d872ae3d282" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="65c4856b-f648-45fa-941d-19fafebdf339" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/fetch_lead_output.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Fetch Ad details Requester" doc:id="0fa55431-7957-47f2-9563-36b6f5859b63" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="4b92e45b-09f9-4e21-90db-18ad603d04df" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/fetch_ad_output.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Salesforce Lead Create" doc:id="c39ca12d-0636-49ba-92eb-b8a2c4f4fce4" processor="salesforce:upsert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="6e893096-bdcd-4fc2-8750-cdc28304ef61" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/create_lead_output.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Salesforce Query Campaign" doc:id="1e12860d-59d8-4225-874b-3fe4f1db5ef7" processor="salesforce:query">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="53981331-ed20-40c1-8780-a6064128fe3f" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/campaign_query_output.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Salesforce Upsert map Lead with Campaign" doc:id="59ca7846-f6e4-44c4-b045-78b58ab4f4f8" processor="salesforce:upsert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="271cea0f-36a4-4bea-ac9f-64f2b0f379c0" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/lead_campaign_mapping_output.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Salesforce Create Campaign Member" doc:id="449e4646-7f40-4c77-a0eb-5fac46417756" processor="salesforce:create">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="34d43a93-3f0c-4d85-a693-2df4c86205f5" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/campaign_memeber_output.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Input Payload" doc:id="2c770b65-37a6-47bb-b395-1cebc85e0dee" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/incoming_payload.dwl')]" />
+			</munit:set-event>
+			<flow-ref doc:name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config" doc:id="1a2ac847-a4f7-4400-9347-f414b562b1ee" name="post:\meta-integration:application\json:bnw-meta-lead-integration-api-config"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="e778996a-ba50-4062-8074-c9f873997549" message="Lead Creation failed." expression="#[payload.successful]" is="#[MunitTools::equalTo(true)]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="lead-creation-failure-flow" doc:id="9d73a6c4-b654-49d6-802c-0731ed57436f" >
+		<munit:execution>
+			<munit:set-event doc:name="Set Event" doc:id="250a9586-4e55-47c7-9a80-56303afca682" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/ip_lead_create_payload.dwl')]" />
+			</munit:set-event>
+			<flow-ref doc:name="BnW-Meta-Create_Lead_In_Salesforce_Flow" doc:id="e7a67219-e365-4f83-87c0-dd332e902701" name="BnW-Meta-Create_Lead_In_Salesforce_Flow"/>
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="dea37982-fbec-43aa-963a-047aceb474ae" actual="#[payload.reason]" expected='Meta_Leadgen_ID__c not specified' message="Invalid Payload. Lead Cannot be created."/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="query-empty-campaign-campaign-creation" doc:id="d2fa0941-13c9-4548-a1ca-c4b283bbcad9" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="3020e701-52ae-49cc-a566-22450c7b616d" processor="salesforce:query">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="53981331-ed20-40c1-8780-a6064128fe3f" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/empty_payload.dwl')]" />
+					<munit-tools:attributes value='#[{&#10;	queryParams : {&#10;		"campaignId" : "841912618356101"&#10;	}&#10;}]' />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="c90fcbdc-2936-4e9d-ae87-016924bf2251" processor="salesforce:upsert">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="315f5d23-75c1-41d7-b9ff-7f5391781b6a" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[readUrl('classpath://leadCreationFlow/campaign_creation_payload.dwl')]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="02fcb30f-aa4b-4015-b6cc-c7be38d58363" >
+				<munit:payload value="#[readUrl('classpath://leadCreationFlow/ip_query_check_payload.dwl')]" />
+			</munit:set-event>
+			<flow-ref doc:name="BnW_Meta_Check_Campaign_Flow" doc:id="9666e0b5-58e2-4e0d-96ba-07099ff1bf80" name="BnW_Meta_Check_Campaign_Flow"/>
+		</munit:execution>
+	</munit:test>
+	
+
+</mule>

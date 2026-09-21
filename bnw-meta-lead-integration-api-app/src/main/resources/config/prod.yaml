@@ -1,0 +1,14 @@
+salesforce:
+    user: "mulesoftintegration@bnwuae.prod"
+    cert-password: "${secure::salesforce.password}"
+    certificate: "prod-Certificate/MulesoftBNWProd.jks"
+    security:
+        url: "https://login.salesforce.com/services/oauth2/token"
+    consumer:
+        key: "${secure::salesforce.consumerKey}"
+
+facebook:
+    token: "${secure::facebook.token}"
+    
+    
+    
