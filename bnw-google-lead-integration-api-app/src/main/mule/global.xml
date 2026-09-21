@@ -23,10 +23,10 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 		
 	<configuration doc:name="Configuration" doc:id="86a59ab9-ddb0-4470-8639-014a5b6d8561" defaultErrorHandler-ref="global-error-handler" />
 	<global-property doc:name="Global Property"
-		doc:id="40858550-8625-427a-988b-8bf32fd76948" name="env" value="uat" />
+		doc:id="40858550-8625-427a-988b-8bf32fd76948" name="env" value="prod" />
 	<global-property doc:name="Global Property"
 		doc:id="a0fa33af-d990-4f92-b637-7af1ea9259cc" name="secureKey"
-		value="bnw-uat" />
+		value="bnw-prod" />
 	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="df836de2-77ce-422e-8832-bb416fabb567" >
 		<salesforce:jwt-connection consumerKey="${salesforce.consumer.key}" keyStore="${salesforce.certificate}" principal="${salesforce.user}" tokenEndpoint="${salesforce.security.url}" storePassword="${salesforce.cert-password}">
 			<reconnection >

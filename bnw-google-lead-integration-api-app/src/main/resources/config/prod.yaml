@@ -1,5 +1,5 @@
 salesforce:
-    user: "mulesoftintegration@bnwuae.com.prod"
+    user: "mulesoftintegration@bnwuae.prod"
     cert-password: "${secure::salesforce.password}"
     certificate: "prod-Certificate/MulesoftBNWProd.jks"
     security:
@@ -9,7 +9,7 @@ salesforce:
         key: "${secure::salesforce.consumerKey}"
         secret: "${secure::salesforce.consumerSecret}"
         
-api.id: "2827596"        
+api.id: "2829101"        
         
 
 facebook:

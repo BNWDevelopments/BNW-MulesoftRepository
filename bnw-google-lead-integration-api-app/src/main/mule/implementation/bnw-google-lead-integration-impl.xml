@@ -35,6 +35,7 @@ payload]]></ee:set-variable>
 output application/json
 ---
 payload.customer_id]]></ee:set-variable>
+				<ee:set-variable variableName="vAttributesVal" ><![CDATA[attributes.queryParams]]></ee:set-variable>
 			
 </ee:variables>
 		</ee:transform>
@@ -112,63 +113,10 @@ output application/java
 			doc:name="map data if campaign details present"
 			doc:id="a21299ff-dd82-4f80-b393-705cef36e304">
 			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/java
-
-// Normalize Meta fields into a map
-var normalizedFields =
-    (vars.meta_data.user_column_data default [])
-        reduce ((item, acc = {}) ->
-            acc ++ {
-                (lower(item.column_id)):
-                    // Handle both string and array safely
-                    if (item.string_value is Array)
-                        item.string_value[0]
-                    else
-                        item.string_value
-            }
-        )
-
-// Extract values using aliases
-var fullName =
-    normalizedFields.full_name
-    default normalizedFields.fullname
-    default normalizedFields.fullname
-    default normalizedFields.name
-    default ""
-
-var email =
-    normalizedFields.email
-    default normalizedFields.email_address
-    default null
-
-var phone =
-    normalizedFields.phone_number
-    default normalizedFields.phone
-    default normalizedFields.mobile
-    default null
-
-// Name split
-var nameParts = fullName splitBy " "
-var firstName = if (sizeOf(nameParts) > 1) nameParts[0] else fullName
-var lastName =
-    if (sizeOf(nameParts) > 1)
-        (nameParts[1 to -1] joinBy " ")
-    else
-        "Unknown"
-
----
-[{
-    FirstName: firstName,
-    LastName: lastName,
-    Email: if (email == "") null else email,
-    MobilePhone: if (phone == "") null else phone,
-    LeadSource: 'Digital',
-	Platform_Source__c: 'Google',
-	Google_Lead_Id__c: vars.meta_data.lead_id
-}]]]></ee:set-payload>
+				<ee:set-payload resource="dwl/mapping_salesforce.dwl" />
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Input payload" doc:id="7ee69219-b932-436e-9d96-cb99c05276e2" message="Google Payload to insert #[payload]"/>
 		<try doc:name="Try" doc:id="1bd9d258-111c-467e-9920-10ce563a7519">
 			<salesforce:upsert doc:name="Create/Upsert a Lead"
 				doc:id="09195a34-879d-442c-a76e-b9cc879da76c"
@@ -343,6 +291,7 @@ output application/java
 }]]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="6fc129ff-971d-40d4-b12e-a94cdb5f0c80" message="Update campaignid and campaign name #[payload.Campaign__c]  #[payload.Campaign_Name__c]"/>
 		<salesforce:upsert
 			doc:name="Mapping Lead with Campaign"
 			doc:id="7af562d1-76ea-47de-91ad-efa686935c7e"
