@@ -10,7 +10,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
 <configuration-properties doc:name="Configuration properties" doc:id="5bb31469-93d0-4c69-80ab-d75e9e74bac1" file="config/${env}.yaml" />
 	<configuration doc:name="Configuration" doc:id="c89ea26b-8f41-465e-8f11-94a35b50985b" defaultErrorHandler-ref="global-error-handler" />
-	<global-property doc:name="Global Property" doc:id="32334a0f-4297-4174-8427-acb22ae9c319" name="secureKey" value="bnw-prod" />
+	<global-property doc:name="Global Property" doc:id="32334a0f-4297-4174-8427-acb22ae9c319" name="secureKey" value="bnw-test" />
 	 <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="da84347d-dd30-4d19-a856-626a337495c4" >
     <http:request-connection protocol="HTTPS" host="graph.facebook.com">
 			<reconnection >
@@ -32,5 +32,5 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 		<secure-properties:encrypt algorithm="Blowfish" />
 	</secure-properties:config>
 	<configuration-properties doc:name="Configuration properties" doc:id="3a6285db-7e9d-4375-a855-1eff0ba62d4e" file="config\common.yaml" />
-	<global-property doc:name="Global Property" doc:id="1785170b-2088-4610-b31f-ea79affc073b" name="env" value="prod" />
+	<global-property doc:name="Global Property" doc:id="1785170b-2088-4610-b31f-ea79affc073b" name="env" value="test" />
 </mule>

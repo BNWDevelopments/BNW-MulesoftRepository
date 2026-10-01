@@ -118,6 +118,7 @@ p('facebook.token')]]></ee:set-variable>
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
+import * from dw::core::Strings
 
 // Normalize Meta fields into a map
 var normalizedFields =
@@ -143,6 +144,10 @@ var firstName =
     normalizedFields.first_name
     default ""
         
+var projectVal =
+    normalizedFields.Project
+    default ""
+            
 var email =
     normalizedFields.email
     default normalizedFields.email_address
@@ -153,7 +158,27 @@ var phone =
     default normalizedFields.phone
     default normalizedFields.mobile
     default null
-
+    
+var planningToInvest =
+    normalizedFields."when_are_you_planning_to_invest?"
+    default ""
+    
+var preferedInvestmentBudget =
+    normalizedFields."what_is_your_preferred_investment_budget?"
+    default ""        
+    
+var utmSourceVal =
+    normalizedFields.utm_source
+    default "" 
+    
+var utmMediumVal =
+    normalizedFields.utm_medium
+    default "" 
+    
+var whatsappNumberVal =
+    normalizedFields."whatsapp_number"
+    default ""       
+    
 // Name split
 //var nameParts = fullName splitBy " "
 //var firstName = if (sizeOf(nameParts) > 1) nameParts[0] else fullName
@@ -165,18 +190,24 @@ var phone =
 
 ---
 [{
-    FirstName: firstName,
-    LastName: lastName,
+    FirstName: if(sizeOf(firstName) > 40) substring(firstName, 0, 40) else firstName,
+    LastName: if(sizeOf(lastName) > 80) substring(lastName, 0, 80) else lastName,
     Email: if (email == "") null else email,
     MobilePhone: if (phone == "") null else phone,
     LeadSource: "Digital",
     Platform_Source__c: "Facebook",
-    Meta_Leadgen_ID__c: vars.leadgen_id
+    Meta_Leadgen_ID__c: vars.leadgen_id,
+    Interested_Project__c : projectVal,
+    Remarks__c :  planningToInvest ++ "\n" ++ preferedInvestmentBudget,
+    UTM_Source__c : utmSourceVal, 
+    UTM_Medium__c : utmMediumVal, 
+    Alternate_Mobile_Number__c : whatsappNumberVal
 }]
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Payload to upsert" doc:id="4f1c2c6d-e72c-42a2-afb3-f0b9b7011c55" message="Fields to upsert in Salesforce #[payload]"/>
+		<set-variable value='#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;&#10;var normalizedFields =&#10;    (vars.leadDetails.field_data default [])&#10;        reduce ((item, acc = {}) -&gt;&#10;            acc ++ {&#10;                (lower(item.name)): &#10;				// Handle both string and array safely&#10;				if (item.values is Array)&#10;                        item.values[0]&#10;                    else&#10;                        item.values&#10;            }&#10;        )&#10;---&#10;normalizedFields."originalCampaignName" default ""]' doc:name="Original Campaign Name" doc:id="cbddbe8b-112e-4b1c-89ae-f6eb65c694fa" variableName="originalCampaignName"/>
 		<try doc:name="Try" doc:id="6206cbeb-d759-47d7-982f-aa84bb3c9f7e">
 			<salesforce:upsert objectType="Lead"
 				doc:name="Create/Upsert a Lead"
@@ -338,7 +369,8 @@ WHERE Campaign_Code__c = ':campaignId']]></salesforce:salesforce-query>
 output application/java
 ---
 [{
-  Name: vars.adDetails.campaign.name default "Facebook Campaign",
+ // Name: vars.adDetails.campaign.name default "Facebook Campaign",
+  Name : vars.originalCampaignName default "Facebook Campaign",
   Type: "Facebook Lead Ad",
   Campaign_Code__c: vars.adDetails.campaign.id,
   Status: "ACTIVE",

@@ -7,7 +7,7 @@
 	<version>1.0.3</version>
 	<packaging>mule-application</packaging>
 
-	<name>bnw-meta-1.0.57-mule-application</name>
+	<name>bnw-meta-lead-integration-kar</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -73,7 +73,7 @@
 			<version>1.2.7</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
-	<!-- 	<dependency>
+		<!-- 	<dependency>
 			<groupId>822fe74e-02e3-4dc4-b2b6-c42e24d2ce18</groupId>
 			<artifactId>bnw-meta-lead-integration-api</artifactId>
 			<version>1.0.1</version>
