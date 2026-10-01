@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+
+	<sub-flow name="process-conversion-leads-when-found" doc:id="4a05116c-62b3-46d3-a2d6-676f2dc55ffb" >
+		<ee:transform doc:name="Data Mapping" doc:id="bb102ed6-c751-4aba-8824-ff7a2c0011f6">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+
+---
+payload map ((lead) -> {
+    id: lead.Id,
+    email: lead.Email,
+    mobilePhone: lead.MobilePhone,
+    telesalesStatusQualifiedAt: lead.Telesales_Status_Qualified_At__c,
+    statusConvertedAt: lead.Status_Converted_At__c,
+    firstName: lead.FirstName,
+    lastName: lead.LastName,
+    metaLeadgenId: lead.Meta_Leadgen_ID__c,
+    fbclid: lead.Fbclid__c,
+    teleSalesLeadStatus: lead.TeleSales_Lead_Status__c,
+    status: lead.Status,
+    telesalesDataSyncedStatus: lead.Telesales_Data_Synced_Status__c,
+    managerDataSyncedStatus: lead.Manager_Data_Synced_Status__c,
+    gclid: lead.Gclid__c
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Separate Leads by unique feilds" doc:id="76749a2c-72d7-458a-ad8e-be124a25c079">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    googleLeads: payload filter ((lead) ->
+        !isEmpty(lead.gclid) 
+    ),
+
+    metaLeads: payload filter ((lead) ->
+        !isEmpty(lead.metaLeadgenId) or !isEmpty(lead.fbclid)
+    )
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="cb362486-df4c-40ed-9fe2-9c1fbfd3706b">
+			<route>
+				<choice doc:name="Choice" doc:id="f27c27bc-f0a4-4009-b363-7d9788593461">
+					<when expression="#[!isEmpty(payload.metaLeads)]">
+						<logger level="INFO" doc:name="Meta Lead count" doc:id="ca21e2b0-1dfa-4465-a293-8fe1282577aa" message='#["Meta leads count: " ++ (sizeOf(payload.metaLeads) as String)]' />
+						<flow-ref doc:name="process_meta_records_subflow" doc:id="5a3942ab-e04e-4049-9ed5-5d31270857eb" name="process_meta_records_subflow" />
+					</when>
+					<otherwise>
+						<logger level="INFO" doc:name="No records found for meta" doc:id="91d681d8-30f9-4612-98f0-b7aecba31ca5" message='"No records found for meta"' />
+					</otherwise>
+				</choice>
+			</route>
+			<route>
+				<choice doc:name="Choice" doc:id="fef0056c-a765-4884-bc01-31ac56d1440f">
+					<when expression="#[!isEmpty(payload.googleLeads)]">
+						<logger level="INFO" doc:name="Google Lead count" doc:id="e6eb9c36-20fd-4385-a116-a7c68ebe9b5c" message='#["Google leads count: " ++ (sizeOf(payload.googleLeads) as String)]' />
+						<flow-ref doc:name="generate-access-token-sub-flow" doc:id="7b78af28-ecca-4679-857a-ce105e0a17a3" name="generate-access-token-sub-flow" />
+						<flow-ref doc:name="google-ads-process-subflow" doc:id="c20d27c8-e58d-4d09-a3d5-2cb99b451310" name="google-ads-process-subflow" />
+					</when>
+					<otherwise>
+						<logger level="INFO" doc:name="No google records found" doc:id="3eccaa0e-cb04-4c67-83e2-6e8395721b44" message='"No Records found for google"' />
+					</otherwise>
+				</choice>
+			</route>
+		</scatter-gather>
+	</sub-flow>
+	<sub-flow name="conversion-google-meta-process-sub-flow" doc:id="da95cc91-89d6-4283-b1e8-7a63c1326d6e" >
+		<logger level="INFO" doc:name="Start Logger" doc:id="daf2ad83-6320-46d9-8ea8-b9188a441172" message='"Start of the flow"' />
+		<salesforce:query doc:name="Salesforce SOQL query" doc:id="ceaf9cac-e3f5-4ada-b5fc-66850dabd695" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[#[p('salesforce.facebookQuery')]]]></salesforce:salesforce-query>
+		</salesforce:query>
+		<choice doc:name="Choice" doc:id="04f5dddc-9b8c-4d1b-99c8-b97f1004b114" >
+			<when expression="#[(payload != null and sizeOf(payload) &gt; 0)]">
+				<logger level="INFO" doc:name="Display of IDs" doc:id="8963adbe-d5fa-432f-a563-28edb320a0f0" message='#[%dw 2.0&#10;output application/json&#10;---&#10;write((payload..Id), "application/json")]' />
+				<flow-ref doc:name="process-conversion-leads-when-found" doc:id="be2d2f1c-52c3-443c-b006-92fa601609a9" name="process-conversion-leads-when-found" />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="46f7e62b-d155-4fcc-9c96-f3c00c7bb9fe" message='#["no conversion leads"]'/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="generate-access-token-sub-flow" doc:id="eabd112a-5910-42a6-889c-5c14563cf963" >
+		<ee:transform doc:name="Transform Message" doc:id="6a3d7333-b843-4cc2-8f09-d98e253e3757">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable resource="dwl/conversion-service-account.dwl" variableName="vConversionVars" />
+			</ee:variables>
+		</ee:transform>
+		<java:invoke-static doc:name="Invoke static" doc:id="c9c089f7-9177-497e-82cc-58d6bf3c2db1" method="generateJwt(String, String, String, String, String)" class="com.example.jwt.JWTTokenGenerationWithParameters" target="jwtToken">
+			<java:args><![CDATA[
+                #[
+                    {
+                        arg0: vars.vConversionVars.privateKeyId,
+                        arg1: vars.vConversionVars.privateKeyPem,
+                        arg2: vars.vConversionVars.clientEmail,
+                        arg3: vars.vConversionVars.tokenUri,
+                        arg4: vars.vConversionVars.tokenScope
+                    }
+                ]
+            ]]></java:args>
+		</java:invoke-static>
+		<http:request method="POST" doc:name="Request" doc:id="0e998a75-6a2b-46d4-ab25-444121077462" url="#[p('conversion.googlead.tokenUri')]" target="accessTokenPayload">
+			<http:body><![CDATA[#[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+	"grant_type":"urn:ietf:params:oauth:grant-type:jwt-bearer",
+	"assertion" : vars.jwtToken
+
+}]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+		</http:request>
+	</sub-flow>
+	<sub-flow name="google-ads-process-subflow" doc:id="0ef26277-aa89-4683-ad7a-eb973c015701" >
+		<parallel-foreach doc:name="Parallel For Each for google leads" doc:id="738db160-a55d-46d8-8683-f3e6e103a429" collection="#[payload.googleLeads]">
+					<set-variable value="#[payload]" doc:name="Google Lead payload" doc:id="c8e60394-68aa-4fd0-b24b-8cf536f7d399" variableName="googleLead" />
+					<ee:transform doc:name="Salesforce Google Lead data mapping to Google API" doc:id="eec9f602-8c43-4107-8029-132948fe1c41">
+					<ee:message>
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "validateOnly": false,
+    "destinations": [
+        {
+            
+            "operatingAccount": {
+                "accountType": "GOOGLE_ADS",
+                "accountId": "5200882266"
+            },
+            "productDestinationId": if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) "7784830204" else if (payload.status == p('conversion.converted')) "7784830207" else null,
+        }
+    ],
+    "events": [
+        {
+            "conversionValue": if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) 10 else if (payload.status == p('conversion.converted')) 100 else null,
+            "currency": "AED",
+            "eventTimestamp": if(payload.telesalesStatusQualifiedAt != null) (payload.telesalesStatusQualifiedAt as DateTime) else null,
+            "eventSource": "OTHER",
+            "adIdentifiers": {
+                "gclid": payload.gclid default ""
+            }
+        }
+    ]
+}
+]]></ee:set-payload>
+
+					</ee:message>
+						<ee:variables>
+						
+</ee:variables>
+				</ee:transform>
+			<try doc:name="Try" doc:id="c2c512af-f2a2-4c2c-a8fb-650c0430b5fc">
+						<until-successful maxRetries="#[p('facebook.graph.maxRetries')]" doc:name="Until Successful" doc:id="a7bbbab9-699e-43e9-912b-12eeef1c97dc" millisBetweenRetries="#[p('facebook.graph.Milliseconds')]">
+							<http:request method="POST" doc:name="Google REST API call" doc:id="55624368-5950-4fbf-8256-f77fad54d407" path="/v1/events:ingest" config-ref="GoogleAd_Request_configuration">
+						<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ vars.accessTokenPayload.access_token,
+	"Content-Type" : "application/json",
+	"developer-token" : p('conversion.googlead.developerToken')
+}]]]></http:headers>
+
+					</http:request>
+						</until-successful>
+						<logger level="INFO" doc:name="Log Google API Response" doc:id="ecd15fa8-2981-4be8-b934-3021dce0f223" message="Google API response: #[write(payload, 'application/json')]" />
+						<set-variable value="Synced" doc:name="Sync status to update in SF" doc:id="df00f9b5-a948-4ffe-ab6a-0d0385221b07" variableName="syncVal" />
+						<flow-ref doc:name="google-sync-status-update-salesforce" doc:id="eddd65bd-6a88-4ed3-849d-593450144256" name="google-sync-status-update-salesforce" />
+						<error-handler>
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="cb4a8a0a-0435-44f9-8f50-adb39b00c0c0">
+								<logger level="INFO" doc:name="Error Logger" doc:id="25cca36b-6007-4981-9ae4-5e5e4b16e345" message='"Google Error handling flow"' />
+								<set-variable value="Error_Synced" doc:name="Error Sync Status" doc:id="ed0a6977-9468-4e6d-b0df-9b79a32ed1fb" variableName="syncVal" />
+								<flow-ref doc:name="google-sync-status-update-salesforce" doc:id="b77ec205-ccbc-4434-8413-2eb0661e4a13" name="google-sync-status-update-salesforce" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</parallel-foreach>
+	</sub-flow>
+	<sub-flow name="process_meta_records_subflow" doc:id="8ce67575-e702-45a9-90de-48c3ef62135e" >
+		<parallel-foreach doc:name="Parallel For Each for meta leads" doc:id="b6f84d21-880b-4871-afe4-c1befd7df08c" collection="#[payload.metaLeads]">
+					<set-variable value="#[payload]" doc:name="Meta Lead payload" doc:id="56744de5-bc61-472c-92c9-53cd27535f02" variableName="metaLead" />
+					<ee:transform doc:name="Salesforce Meta Lead data mapping to Meta API" doc:id="10df530d-23d8-4d54-b6d4-280ffaabb669">
+					<ee:message>
+					</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="vDataVar"><![CDATA[%dw 2.0
+
+output application/json
+ 
+import dw::Crypto
+import * from dw::core::Binaries
+import mergeWith from dw::core::Objects
+ 
+// Utility function to normalize and SHA-256 hash text (Meta requirement)
+
+fun hashSHA256(value: String) =  lower(
+        toHex(
+            Crypto::hashWith(
+                trim(lower(value)) as Binary,
+                "SHA-256"
+            )
+        )
+    )
+
+---
+
+{
+
+  data: [
+
+    {
+
+      event_name: if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) "Qualified" else if (payload.status == p('conversion.converted')) "Converted" else null,
+
+      event_time: if (payload.teleSalesLeadStatus == p('conversion.qualified_stage'))( if(payload.telesalesStatusQualifiedAt != null) (payload.telesalesStatusQualifiedAt as DateTime as Number) else null )else if (payload.status == p('conversion.converted')) (if(payload.statusConvertedAt != null)(payload.statusConvertedAt as DateTime as Number) else null) else null,
+
+      event_source_url: p('facebook.eventSourceURL'),
+
+      action_source: "system_generated",
+//Google_Lead_Id__c,FirstName,LastName,Email,MobilePhone
+      user_data: (
+       {  
+       	lead_id: payload.metaLeadgenId, 
+       fbclid: payload.fbclid default ""
+       } 
+      		  mergeWith (if (payload.email != null)
+							{ em: [hashSHA256(payload.email as String)] }
+						else
+								{})
+			 mergeWith (
+							if (payload.mobilePhone != null)
+							{ ph: [hashSHA256(payload.mobilePhone as String)] }
+							else
+							{})
+			 mergeWith (
+							if (payload.lastName != null)
+							{ ln: [hashSHA256(payload.lastName as String)] }
+							else
+							{})
+			 mergeWith (
+							if (payload.firstName != null)
+							{ fn: [hashSHA256(payload.firstName as String)] }
+							else
+							{})				
+				),
+    
+      custom_data: {
+      	         lead_status:  if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) payload.teleSalesLeadStatus else if (payload.status == p('conversion.converted')) payload.Status else null,
+      	         salesforce_lead_id: payload.id default "",
+      	         value: if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) 10 else if (payload.status == p('conversion.converted')) 100 else null,
+                 currency: "AED"
+
+      }
+
+   
+
+    }
+
+  ]
+
+}
+ ]]></ee:set-variable>
+						</ee:variables>
+				</ee:transform>
+			<try doc:name="Try" doc:id="96ae9d18-dbcb-4079-9125-af55c4191dd9">
+						<until-successful maxRetries="#[p('facebook.graph.maxRetries')]" doc:name="Until Successful" doc:id="a625ddaf-3b1a-4a5d-8720-83df2177cae8" millisBetweenRetries="#[p('facebook.graph.Milliseconds')]">
+							<http:request method="POST" doc:name="Meta REST API call" doc:id="5887a2af-9e82-463c-b3ae-4a9afa5ceb3a" path="#['/' ++ p('facebook.graph.version') ++ '/' ++ p('facebook.graph.pixelId') ++ '/' ++ p('facebook.graph.eventsPath')]" config-ref="Facebook_Request_configuration">
+						<http:body><![CDATA[#[%dw 2.0
+output application/x-www-form-urlencoded
+---
+{
+access_token: p('facebook.graph.accessToken'),
+
+data: write(vars.vDataVar.data, "application/json")
+
+}]]]></http:body>
+					</http:request>
+						</until-successful>
+						<logger level="INFO" doc:name="Log Meta API Response" doc:id="a50b4957-4378-4407-895a-8365436c3a5a" message="Meta API response: #[write(payload, 'application/json')]" />
+						<set-variable value="Synced" doc:name="sync status to update in SF" doc:id="9d96cb23-074a-4eeb-b10c-8a4d2aa0343b" variableName="syncVal" />
+						<flow-ref doc:name="meta-sync-status-update-salesforce" doc:id="090dcc95-5fe5-4a79-aaf7-b6d03bb426ed" name="meta-sync-status-update-salesforce" />
+						<error-handler>
+							<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b3326eb9-e6b0-4820-a26e-6e2fdce0cfac">
+								<logger level="INFO" doc:name="Error Logger" doc:id="68d17fdb-7694-4d3c-a848-65bc0ed296ed" message='"Error handling flow Meta"' />
+								<set-variable value="Error_Synced" doc:name="Error Sync Status" doc:id="a21df529-012e-4546-b0e8-8e6869c3f250" variableName="syncVal" />
+								<flow-ref doc:name="meta-sync-status-update-salesforce" doc:id="8d2a10f6-283e-4780-8d81-80052f5e3875" name="meta-sync-status-update-salesforce" />
+							</on-error-continue>
+						</error-handler>
+					</try>
+				</parallel-foreach>
+	</sub-flow>
+	<flow name="scheduler-conversion-lead-feedback-implFlow" doc:id="d946b5ba-b3ac-4d00-8140-2e4f78c41a83" >
+		<scheduler doc:name="Scheduler" doc:id="f8414030-0b96-4b5d-8577-a8e672f2161b" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="${scheduler.fixedFrequency}" timeUnit="HOURS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<flow-ref doc:name="conversion-google-meta-process-sub-flow" doc:id="d6061182-84b8-45c4-b740-400f0a76a604" name="conversion-google-meta-process-sub-flow" />
+	</flow>
+	<sub-flow name="meta-sync-status-update-salesforce" doc:id="806d8dc9-5274-4d8f-8d1f-82e498ab0286" >
+		<ee:transform doc:name="logic for updation of Meta sync status in salesforce" doc:id="2dcf04b1-e4f7-48b5-a146-6079ec8b2d21" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="syncSFupdate" ><![CDATA[%dw 2.0
+output application/java
+
+var lead = vars.metaLead
+
+---
+[
+    {
+        Id: lead.id,
+        Telesales_Data_Synced_Status__c:
+            if (lead.teleSalesLeadStatus == "Qualified Stage")
+                vars.syncVal
+            else
+                null,
+        Manager_Data_Synced_Status__c:
+            if (lead.status == "Converted")
+                vars.syncVal
+            else
+                null
+    } filterObject ((value, key) -> value != null)
+]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:update type="Lead" doc:name="Update status in salesforce" doc:id="e8ae50bc-b55e-407d-889f-6c69d8b6d3fc" config-ref="Salesforce_Config">
+			<salesforce:records ><![CDATA[#[vars.syncSFupdate]]]></salesforce:records>
+		</salesforce:update>
+		<logger level="INFO" doc:name="End Logger" doc:id="8d7fa606-add6-4aaf-bf09-0766bedb92a6" message='"End of the Meta flow"'/>
+	</sub-flow>
+	<sub-flow name="google-sync-status-update-salesforce" doc:id="8513c806-118f-4d4d-8522-1a604505f600" >
+		<ee:transform doc:name="logic for updation of Google sync status in salesforce" doc:id="0717fca2-4020-4238-8b83-6fbe52057aa0" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="syncSFupdate" ><![CDATA[%dw 2.0
+output application/java
+
+var lead = vars.googleLead
+
+---
+[
+    {
+        Id: lead.id,
+        Telesales_Data_Synced_Status__c:
+            if (lead.teleSalesLeadStatus == "Qualified Stage")
+                vars.syncVal
+            else
+                null,
+        Manager_Data_Synced_Status__c:
+            if (lead.status == "Converted")
+                vars.syncVal
+            else
+                null
+    } filterObject ((value, key) -> value != null)
+]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<salesforce:update type="Lead" doc:name="Update status in salesforce" doc:id="f57e7615-dde8-4b07-8c23-cd14798162f7" config-ref="Salesforce_Config">
+			<salesforce:records ><![CDATA[#[vars.syncSFupdate]]]></salesforce:records>
+		</salesforce:update>
+		<logger level="INFO" doc:name="End Logger" doc:id="99a36495-ad15-4e22-a30d-0472496799f3" message='"End of the Google flow"'/>
+	
+</sub-flow>
+</mule>

@@ -10,3 +10,10 @@ google:
   securedCustomerId: "![2q+WFTOjE1Lc9JDY+/mXAg==]"
   securedKey: ""
   securedAccessToken: ""
+  
+facebook:
+  securedAccessToken: "![K8IIDqlOsVUC++8ofHbvGOmYMzHS21j3SRQxAFfE32pCgZDYLQaaF/pFYZM0/d+lPhyGuMpCLMWY3Q9yEVkI+Y1874tKKHcCJkU57lTRW++lorKDTpkZxKHBJ02D0wND2W0tpOjMrlECKkn2ubeDSPJZiSyZlXpFSjGe0vzIz8itDh+J0BuMFQcsYjm3DxUOhQu688Ri9Rr/N1YOpGwSS4BKg4w7GCAch3Bn76Ob3s6UKW+OmBdKGlXVXQEiHQmMzVFw3HzJmbbx5HSZO3iiCQ==]"
+              
+googlead:  
+  privateKey: "![2YACqwj5f157zozi7qAgNA33PSWbFfRn8lnBhj1P1OfO3+43YehqB8xFSFEFBlzc]"
+  clientEmail: "![kbq/2sAOFzyOt+kW0aFYFHcCB6VIfMxRebTdDVP+Fl+wJAmhzd9sYET1eIxOzUah++BSZImmHURJkXg1lz43ZxQrJQe5TQfqnnvOUKuWYVFpPzN4PfJxQQ==]"

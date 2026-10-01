@@ -17,3 +17,27 @@ google:
   customerId: "${secure::google.securedCustomerId}"
   key: "${secure::google.securedKey}"
   accessToken: "${secure::google.securedAccessToken}"
+  
+facebook:
+  graph:
+    protocol: "https"
+    host: "graph.facebook.com"
+    version: "v20.0"
+    pixelId: "1213899032470058"
+    eventsPath: "events"
+    accessToken: "${secure::facebook.securedAccessToken}"
+    maxRetries: "3"
+    Milliseconds: "5000"
+    
+scheduler:
+  fixedFrequency: "2"  
+  
+conversion:
+  googlead: 
+    privateKeyId : "${secure::googlead.privateKey}"  
+    privateKeyPem :  "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDyRUXPglI1n1by\nB1WJyn11CbO/FvRk0HbGxrtGnCq5O2xS8UUa3aXDtX4ntRbOnfTS+2mlW9pQupwz\nObQxpC3hqe3HXjCTtKmpJBHMSE7770nclVBymrTh/MgZPnj4v4U8IHwUjiUqLpF/\nYCNmCNAZRolzMiO13wli9qoXzYTfG8H67qmj4d2jFXkXJVJ7zIl1dsNgwqQfrt/9\nU7jzsbYOtCPqzMH7o9MwGJFWzICmszdTtVNA+Bps3NMe+G6nLF8CfA6dy1loHop9\n2RHoyCc0Zy+aYERUpw2ykJC5jy1JhWjHNgMlfv+jAnvPaZhbpGj6UghqYcLxyczI\nQ3M71JSBAgMBAAECggEAWO7v8PwkZHXA62ig0EuKIT/2ASQSg714lIBYN9PU5Rk4\nqvvRQ8rwcja6ACZ8IE2glSBgSCi/K9pMw4sfqAdeJlQEKqbbSyVLEIFinSw//kB5\nSyVumhtLYheydn3V124qoQdFtR/26ZSdqXXnmKmMhnK7uxNBQ56DqhXlG4bAi0tE\n1qSwB6GTCUYReIgjPLLC/n3vahyK3N3c5WdgpxHbZ+cyMVSyfT2rS+iA9oWr2poC\npWlp+XXka8RjWYUAkcYnlsjPcxQkykzhw9uV++rsWPmhTUDLHUDlIk7Jy/mM3v2v\nbXoXSoEo6JBprKied3DG8LPFHq/BCdu6UpMkJgTK5wKBgQD+7rIiPmWOFHk0lBkQ\nlvlIbIgyb1x6XQaUYo+Sc8+T13PdSvIcHwVrRhgOa8o9ezR87tUT9APJB7dTKvmY\nCGlrOjCuN4YutsSeZ7GQURqd5iveNC/ex4snkHcIwGQJYO+THc8ndF7AsQeAt7lo\n8cHlpSgM78YijSDvdjny+06KDwKBgQDzSQCo6aiSKWrF3sjGButm8loiKvk9iFt6\nrv9bdhJzPYHK5NeMQ95ORfnMViSJ9nSfJe1u0fGfJgD5Biaf8APgIlX2SBXjsgqF\nvLjggEYK9W5uDUEi/B93Bsz2I3lgNNAPBBM0fy1EKuxXY1KSz+pEMYj9FhJLY+ws\nYDYnf2XIbwKBgQCFBN+F5rDu1df4i14Yve4M0DSwvFKwtmF8g4EOlcc2CTG3wida\nbQVS2BwtSikYs3TLy4L7ClP/TTtm9gGORrVa8d38yZQGQ++MB+cqumb9BODW7Lwd\nrlj5p/O0aU7JZf8b8G3q1FmsibK0gykHjT3zKZ4gQexMkv8gc7wBAQgWGQKBgQCB\ndli2iljdJtMd5tcaojYEu3UBd7LYbsaXe6aBykw5LQLzsGGPz9Ht/0jV1wVssU0Q\nH8PA1FHq6fNckUxekf/N9xedjnCvkWAOGQac2UXssPyJ7d26u0YXNfQ+C1ScwJ3z\nT6zUo9S30MuiGUWowKGelmmanHMx0UOtvakzzZShWwKBgGuKczqrq9MJ2ZkNgi3a\neLHebQyF4/83ZTYQzekenrTvi8ryXqDYsFyd0MQqN1RnrmccDK9OTxYYTR5ZOztF\nlf0rbst0WGaWhFuS7tZ2qJUbfPGU0YFA8ZMY5TnUOtRPt1qzQEyhxScy+HKagyfZ\nZAFCMyxS0aAN/OkSU4ukjl3E\n-----END PRIVATE KEY-----\n"
+    clientEmail : "${secure::googlead.clientEmail}"
+    tokenUri : "https://oauth2.googleapis.com/token"
+    tokenScope : "https://www.googleapis.com/auth/datamanager https://www.googleapis.com/auth/adwords"
+    googleHost : "datamanager.googleapis.com"
+    developerToken : "AXR4mrWZgF_OJ0EWHnhYrQ"  

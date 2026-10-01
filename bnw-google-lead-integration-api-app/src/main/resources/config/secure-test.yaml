@@ -8,3 +8,13 @@ google:
   securedDeveloperToken: ""
   securedRefreshToken: ""
   securedCustomerId: ""
+  
+googlead:  
+  privateKey: "![dns4iHH1imu/LiR+mVZJQ7q+paKU1t9FOQPsZ/lOLc8QZsttc7aLFRN4l8gzHK14]"
+  clientEmail: "![N/r75GQkh0DA40gh/6tLTtyB9FvNGsSbiRddZFbAf22W5hZNFcGfjPIrpkBAsOFVdYijaqtM3M856NcZ/Tw4uPWD++aOmcTFFpEUaGDW9ug3cVWLKK7AKg==]"
+
+
+facebook:
+  securedAccessToken: "![VFmwOisyM8bf/Y8V7+XWrvZYtTU6tY+rZiaXZrwYf1RlNvCiZfvKKemFHy0HWRiHKKqzQ4fsYyW4UJ3sfTOgwRdwYtKOfuJRGx5ECPHN7emRN5u5+7r2qWCIml872e7ULyk6a+mLRW3WxkurU2ToIv0o48aWZ16gGuCBVqXpEmwBXiNQxmubKmvQCi3MKZIozGS7s+md99j1uyAMEFjnhy3f1dGrHFedzMZ2jMCMiTjqjMPNHD38taY+ZhyDU8ELq0jHXpwpioV06ttDI9S8WA==]"
+     
+  

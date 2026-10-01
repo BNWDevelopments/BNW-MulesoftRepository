@@ -116,6 +116,7 @@ output application/java
 				<ee:set-payload resource="dwl/mapping_salesforce.dwl" />
 			</ee:message>
 		</ee:transform>
+		<set-variable value="#[if(vars.vAttributesVal !=null) vars.vAttributesVal.originalCampaignName else null]" doc:name="Original Campaign Name" doc:id="6bacbcf0-dd82-4ce0-910f-250536b331be" variableName="originalCampaignName"/>
 		<logger level="INFO" doc:name="Input payload" doc:id="7ee69219-b932-436e-9d96-cb99c05276e2" message="Google Payload to insert #[payload]"/>
 		<try doc:name="Try" doc:id="1bd9d258-111c-467e-9920-10ce563a7519">
 			<salesforce:upsert doc:name="Create/Upsert a Lead"
@@ -256,7 +257,8 @@ WHERE Campaign_Code__c = ':campaignId']]></salesforce:salesforce-query>
 output application/java
 ---
 [{
-  Name: vars.campaignName default "Google Campaign",
+  //Name: vars.campaignName default "Google Campaign",
+  Name: vars.originalCampaignName default "Google Campaign",
   Type: "Google Lead Ad",
   Campaign_Code__c: vars.Id,
   Status: "ACTIVE",

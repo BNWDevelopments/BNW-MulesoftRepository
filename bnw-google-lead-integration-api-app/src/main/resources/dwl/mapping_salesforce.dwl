@@ -1,5 +1,6 @@
 %dw 2.0
 import mergeWith from dw::core::Objects
+import * from dw::core::Strings
 output application/java
 
 // Normalize Meta fields into a map
@@ -64,6 +65,7 @@ var phone =
     Email: if (email == "") null else email,
     MobilePhone: if (phone == "") null else phone,
     LeadSource: 'Digital'
+    
     } mergeWith 
     (if(vars.vAttributesVal.utm_source == "google") {
     Platform_Source__c: 'Google',
@@ -82,8 +84,8 @@ var phone =
     Adgroup_Name__c : vars.vAttributesVal.utm_adgroup,
     UTM_Campaign__c:  vars.vAttributesVal.utm_campaign, 
     UTM_CampaignId__c :   vars.vAttributesVal.utm_id,
-    UTM_Content__c : vars.vAttributesVal.utm_content
-    
+    UTM_Content__c : vars.vAttributesVal.utm_content,
+    Interested_Project__c : vars.vAttributesVal.Project
     } 
     else
      {
@@ -102,7 +104,8 @@ var phone =
 		Utm_term__c: if(vars.vAttributesVal !=null) vars.vAttributesVal.utm_term else null,
 		UTM_Content__c :  if(vars.vAttributesVal !=null) vars.vAttributesVal.utm_content else null,
 		Adgroup_Name__c : if(vars.vAttributesVal !=null) vars.vAttributesVal.utm_adset else null,
-		UTM_CampaignId__c :  if(vars.vAttributesVal !=null) vars.vAttributesVal.utm_id else null
+		UTM_CampaignId__c :  if(vars.vAttributesVal !=null) vars.vAttributesVal.utm_id else null,
+		Interested_Project__c : if(vars.vAttributesVal !=null) vars.vAttributesVal.Project else null 
 	
     }
     

@@ -23,10 +23,10 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 		
 	<configuration doc:name="Configuration" doc:id="86a59ab9-ddb0-4470-8639-014a5b6d8561" defaultErrorHandler-ref="global-error-handler" />
 	<global-property doc:name="Global Property"
-		doc:id="40858550-8625-427a-988b-8bf32fd76948" name="env" value="prod" />
+		doc:id="40858550-8625-427a-988b-8bf32fd76948" name="env" value="uat" />
 	<global-property doc:name="Global Property"
 		doc:id="a0fa33af-d990-4f92-b637-7af1ea9259cc" name="secureKey"
-		value="bnw-prod" />
+		value="bnw-uat" />
 	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="df836de2-77ce-422e-8832-bb416fabb567" >
 		<salesforce:jwt-connection consumerKey="${salesforce.consumer.key}" keyStore="${salesforce.certificate}" principal="${salesforce.user}" tokenEndpoint="${salesforce.security.url}" storePassword="${salesforce.cert-password}">
 			<reconnection >
@@ -47,5 +47,10 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 		<http:request-connection host="oauth2.googleapis.com" protocol="HTTPS"/>
 	</http:request-config>
 	<api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="768b41ac-3dc0-4387-b01c-0115ddefecf9" flowRef="bnw-google-ad-lead-integration-api-main" />
-
+	<http:request-config name="Facebook_Request_configuration" doc:name="HTTP Request configuration" doc:id="cb863abe-22ef-47b9-974a-8f6da2c73779" >
+		<http:request-connection host="#[p('facebook.graph.host')]" />
+	</http:request-config>
+   	<http:request-config name="GoogleAd_Request_configuration" doc:name="HTTP Request configuration" doc:id="930fdaee-7590-4539-8b54-bf2adf9d6292" >
+	    <http:request-connection protocol="HTTPS" host="#[p('conversion.googlead.googleHost')]" port="443" />
+	</http:request-config>
 </mule>

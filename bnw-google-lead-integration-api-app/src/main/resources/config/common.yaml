@@ -7,4 +7,13 @@ http:
 salesforce:
    frequency: "2000"
    reconnection_attempts: "2"
+   facebookQuery: "Select Id, Email, MobilePhone, Telesales_Status_Qualified_At__c, Status_Converted_At__c, FirstName, LastName, Meta_Leadgen_ID__c, Fbclid__c, TeleSales_Lead_Status__c , Status, Telesales_Data_Synced_Status__c, Manager_Data_Synced_Status__c, Gclid__c From Lead Where (Meta_Leadgen_ID__c != null Or Fbclid__c != null OR Gclid__c != null) AND ((Telesales_Data_Synced_Status__c != 'Synced' And TeleSales_Lead_Status__c = 'Qualified Stage') OR (Manager_Data_Synced_Status__c != 'Synced' AND Status = 'Converted'))"
+   
+facebook:
+  eventSourceURL : "https://bnwdevelopments.com"
+  
+conversion:
+   qualified_stage : "Qualified Stage"
+   converted: "Converted"  
+      
 
