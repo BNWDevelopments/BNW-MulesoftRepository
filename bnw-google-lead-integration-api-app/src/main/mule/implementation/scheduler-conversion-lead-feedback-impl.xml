@@ -24,7 +24,7 @@ payload map ((lead) -> {
     firstName: lead.FirstName,
     lastName: lead.LastName,
     metaLeadgenId: lead.Meta_Leadgen_ID__c,
-    fbclid: lead.Fbclid__c,
+    fbclid: lead.FBclid__c,
     teleSalesLeadStatus: lead.TeleSales_Lead_Status__c,
     status: lead.Status,
     telesalesDataSyncedStatus: lead.Telesales_Data_Synced_Status__c,
@@ -86,7 +86,7 @@ output application/json
 				<flow-ref doc:name="process-conversion-leads-when-found" doc:id="be2d2f1c-52c3-443c-b006-92fa601609a9" name="process-conversion-leads-when-found" />
 			</when>
 			<otherwise >
-				<logger level="INFO" doc:name="Logger" doc:id="46f7e62b-d155-4fcc-9c96-f3c00c7bb9fe" message='#["no conversion leads"]'/>
+				<logger level="INFO" doc:name="No conversion leads" doc:id="46f7e62b-d155-4fcc-9c96-f3c00c7bb9fe" message='#["no conversion leads"]'/>
 			</otherwise>
 		</choice>
 	</sub-flow>
@@ -199,83 +199,7 @@ output application/json
 					<ee:message>
 					</ee:message>
 						<ee:variables>
-							<ee:set-variable variableName="vDataVar"><![CDATA[%dw 2.0
-
-output application/json
- 
-import dw::Crypto
-import * from dw::core::Binaries
-import mergeWith from dw::core::Objects
- 
-// Utility function to normalize and SHA-256 hash text (Meta requirement)
-
-fun hashSHA256(value: String) =  lower(
-        toHex(
-            Crypto::hashWith(
-                trim(lower(value)) as Binary,
-                "SHA-256"
-            )
-        )
-    )
-
----
-
-{
-
-  data: [
-
-    {
-
-      event_name: if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) "Qualified" else if (payload.status == p('conversion.converted')) "Converted" else null,
-
-      event_time: if (payload.teleSalesLeadStatus == p('conversion.qualified_stage'))( if(payload.telesalesStatusQualifiedAt != null) (payload.telesalesStatusQualifiedAt as DateTime as Number) else null )else if (payload.status == p('conversion.converted')) (if(payload.statusConvertedAt != null)(payload.statusConvertedAt as DateTime as Number) else null) else null,
-
-      event_source_url: p('facebook.eventSourceURL'),
-
-      action_source: "system_generated",
-//Google_Lead_Id__c,FirstName,LastName,Email,MobilePhone
-      user_data: (
-       {  
-       	lead_id: payload.metaLeadgenId, 
-       fbclid: payload.fbclid default ""
-       } 
-      		  mergeWith (if (payload.email != null)
-							{ em: [hashSHA256(payload.email as String)] }
-						else
-								{})
-			 mergeWith (
-							if (payload.mobilePhone != null)
-							{ ph: [hashSHA256(payload.mobilePhone as String)] }
-							else
-							{})
-			 mergeWith (
-							if (payload.lastName != null)
-							{ ln: [hashSHA256(payload.lastName as String)] }
-							else
-							{})
-			 mergeWith (
-							if (payload.firstName != null)
-							{ fn: [hashSHA256(payload.firstName as String)] }
-							else
-							{})				
-				),
-    
-      custom_data: {
-      	         lead_status:  if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) payload.teleSalesLeadStatus else if (payload.status == p('conversion.converted')) payload.Status else null,
-      	         salesforce_lead_id: payload.id default "",
-      	         value: if (payload.teleSalesLeadStatus == p('conversion.qualified_stage')) 10 else if (payload.status == p('conversion.converted')) 100 else null,
-                 currency: "AED"
-
-      }
-
-   
-
-    }
-
-  ]
-
-}
- ]]></ee:set-variable>
+					<ee:set-variable resource="dwl/meta_data.dwl" variableName="vDataVar" />
 						</ee:variables>
 				</ee:transform>
 			<try doc:name="Try" doc:id="96ae9d18-dbcb-4079-9125-af55c4191dd9">

@@ -33,7 +33,7 @@ facebook:
     Milliseconds: "5000"
     
 scheduler:
-  fixedFrequency: "2"  
+  fixedFrequency: "12"  
   
 conversion:
   googlead: 

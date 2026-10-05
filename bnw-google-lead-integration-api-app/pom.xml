@@ -7,7 +7,7 @@
 	<version>1.0.1-SNAPSHOT</version>
 	<packaging>mule-application</packaging>
 
-	<name>bnw-google-lead-kar</name>
+	<name>bnw-google-lead-integration-api-app</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
