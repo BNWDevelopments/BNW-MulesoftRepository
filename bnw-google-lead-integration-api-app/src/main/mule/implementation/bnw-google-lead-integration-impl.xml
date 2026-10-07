@@ -36,7 +36,10 @@ output application/json
 ---
 payload.customer_id]]></ee:set-variable>
 				<ee:set-variable variableName="vAttributesVal" ><![CDATA[attributes.queryParams]]></ee:set-variable>
-			
+<ee:set-variable variableName="vProjectVar" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.Project]]></ee:set-variable>			
 </ee:variables>
 		</ee:transform>
 		<logger level="INFO" doc:name="Looking up Campaign ID"
